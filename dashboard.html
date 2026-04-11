@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BioSense360 — Dashboard de Vivabilité Thermique</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="dashboard_data.js"></script>
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --c0: #22c55e; --c1: #a3e635; --c2: #facc15; --c3: #fb923c;
+      --c4: #f87171; --c5: #ef4444; --c6: #dc2626; --c7: #991b1b;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px; line-height: 1.6;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--c0); box-shadow: 0 0 8px var(--c0);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+    .logo-title { font-size: 17px; font-weight: 700; letter-spacing: .5px; }
+    .logo-sub   { font-size: 11px; color: var(--muted); }
+    .header-meta { font-size: 12px; color: var(--muted); text-align: right; }
+    .header-meta strong { color: var(--accent); }
+
+    /* ── Source Toggle ────────────────────────────────────────── */
+    .source-bar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 10px 28px; display: flex; align-items: center; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .source-label { font-size: 11px; color: var(--muted); font-weight: 700;
+      text-transform: uppercase; letter-spacing: .7px; }
+    .source-btns { display: flex; gap: 8px; }
+    .src-btn {
+      padding: 5px 16px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer; font-size: 12px;
+      font-weight: 500; transition: all .2s;
+    }
+    .src-btn.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+    .src-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+    .src-info { margin-left: auto; font-size: 11px; color: var(--muted); font-style: italic; }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .layout { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 108px); }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--surface); border-right: 1px solid var(--border);
+      padding: 18px; overflow-y: auto;
+      max-height: calc(100vh - 108px); position: sticky; top: 108px;
+    }
+    .panel-title {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .9px;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title::after { content:""; flex:1; height:1px; background:var(--border); }
+
+    /* Calendar */
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .cal-year { font-size: 14px; font-weight: 700; }
+    .nav-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      cursor: pointer; padding: 2px 10px; border-radius: 4px; font-size: 14px;
+      transition: all .2s;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .cal-month { margin-bottom: 10px; }
+    .cal-month-name { font-size: 10px; font-weight: 700; color: var(--muted);
+      margin-bottom: 3px; text-transform: uppercase; letter-spacing: .5px; }
+    .cal-week-header {
+      display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 2px;
+    }
+    .cal-week-header span { text-align: center; font-size: 9px; color: var(--muted); font-weight: 600; }
+    .cal-days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-day {
+      aspect-ratio: 1; border-radius: 3px; cursor: pointer;
+      background: var(--border); transition: transform .1s;
+      position: relative;
+    }
+    .cal-day:hover { transform: scale(1.35); z-index: 10; }
+    .cal-day.selected { outline: 2px solid white; z-index: 5; }
+    .cal-day.empty   { background: transparent; cursor: default; }
+    .cal-day.no-data { background: #1c2230; cursor: default; }
+
+    /* Legend */
+    .legend-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 5px; cursor: pointer; border-radius: 4px; transition: background .15s;
+    }
+    .legend-row:hover { background: rgba(255,255,255,.05); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    .legend-text  { font-size: 11px; }
+    .legend-seuil { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+
+    /* ── Main ─────────────────────────────────────────────────── */
+    .main { padding: 18px 22px; overflow-y: auto; }
+
+    /* Day Nav */
+    .day-nav {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    #date-display { font-size: 19px; font-weight: 700; flex: 1; }
+    .day-btn {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      cursor: pointer; padding: 6px 14px; border-radius: 6px; font-size: 12px;
+      transition: all .2s; white-space: nowrap;
+    }
+    .day-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #date-input {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 6px 10px; border-radius: 6px; font-size: 12px;
+    }
+    #date-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Stats Row */
+    .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .7px; margin-bottom: 3px; }
+    .stat-value { font-size: 20px; font-weight: 700; }
+    .stat-unit  { font-size: 11px; color: var(--muted); }
+    .stat-sub   { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* Alarm Badge */
+    #alarm-badge {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;
+      border: 1px solid var(--border); transition: all .3s;
+    }
+    .badge-cls    { font-size: 40px; font-weight: 900; line-height: 1; }
+    .badge-niveau { font-size: 17px; font-weight: 700; }
+    .badge-seuil  { font-size: 11px; color: var(--muted); }
+    .badge-src    { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; }
+
+    /* Charts Row */
+    .charts-row { display: grid; grid-template-columns: 1fr 210px; gap: 12px; margin-bottom: 14px; }
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px;
+    }
+    .chart-title {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
+    }
+
+    /* Recommendations */
+    .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .rec-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .rec-card-title {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .7px;
+      margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .rec-conseil { font-size: 14px; font-weight: 600; line-height: 1.5; }
+    .rec-protocole { list-style: none; }
+    .rec-protocole li {
+      display: flex; gap: 10px; padding: 7px 0;
+      border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.4;
+    }
+    .rec-protocole li:last-child { border-bottom: none; }
+    .rec-step-num {
+      width: 18px; height: 18px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+      color: #0d1117;
+    }
+
+    /* Legal warning */
+    .legal-warning {
+      margin-top: 12px; padding: 10px 12px; border-radius: 6px;
+      font-size: 11px; line-height: 1.5;
+      background: #ff000011; border: 1px solid #ff000033;
+    }
+    .legal-warning strong { color: #f87171; }
+
+    /* Vulnerable populations */
+    .vuln-card {
+      background: #dc262611; border: 1px solid #dc262644;
+      border-radius: 8px; padding: 14px; margin-bottom: 12px;
+    }
+    .vuln-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .vuln-tag {
+      background: var(--border); padding: 3px 10px; border-radius: 12px;
+      font-size: 11px;
+    }
+
+    /* Hourly table */
+    .timeline-table { width: 100%; border-collapse: collapse; }
+    .timeline-table th {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .timeline-table td {
+      padding: 7px 12px; border-bottom: 1px solid var(--border);
+      font-size: 12px; cursor: pointer; transition: background .15s;
+    }
+    .timeline-table tr:hover td { background: rgba(255,255,255,.04); }
+    .timeline-table tr.active-row td { background: rgba(88,166,255,.08); }
+    .cls-pill {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-size: 11px; font-weight: 700; color: #0d1117; min-width: 28px; text-align: center;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: fixed; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 12px; font-size: 12px;
+      pointer-events: none; z-index: 999; white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,.5); display: none;
+    }
+
+    /* No data */
+    .no-data-msg {
+      text-align: center; padding: 80px 40px; color: var(--muted); font-size: 15px;
+    }
+    .no-data-msg code { background: var(--surface); padding: 2px 8px; border-radius: 4px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+
+    .map-section {
+    margin-bottom: 14px;
+  }
+  .map-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .map-title {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .map-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  #biosense-map {
+    width: 100%;
+    height: 420px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .map-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 10px; padding: 8px 0;
+  }
+  .map-legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+  }
+  .map-legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3);
+  }
+  /* Leaflet popup styling */
+  .leaflet-popup-content-wrapper {
+    background: #161b22 !important;
+    color: #e6edf3 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,.6) !important;
+  }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 12px !important; line-height: 1.6 !important; }
+  .popup-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .popup-source { font-size: 10px; color: #8b949e; margin-bottom: 8px; }
+  .popup-row { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; border-bottom: 1px solid #30363d; }
+  .popup-row:last-child { border-bottom: none; }
+  .popup-label { color: #8b949e; }
+  .popup-value { font-weight: 600; }
+  .popup-cls-pill {
+    display: inline-block; padding: 1px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; color: #0d1117;
+  }
+
+  /* Zone overlay legend */
+  .map-zones-info {
+    margin-top: 8px; font-size: 11px; color: var(--muted);
+    font-style: italic;
+  }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border); padding: 12px 28px;
+      display: flex; gap: 20px; font-size: 11px; color: var(--muted);
+      flex-wrap: wrap;
+    }
+    footer strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="logo-title">BioSense360</div>
+      <div class="logo-sub">Surveillance de Vivabilité Thermique — TER M1 IA, Université de Toulouse &bull; Client : Neusta</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    Modèle : <strong>RandomForest — 500 arbres — Entropie</strong><br/>
+    Précision test : <strong>99,98 %</strong> &nbsp;&bull;&nbsp; Validation Neusta : <strong>99,05 %</strong>
+  </div>
+</header>
+
+<!-- ── Source Toggle ──────────────────────────────────────────────────────── -->
+<div class="source-bar">
+  <span class="source-label">Source</span>
+  <div class="source-btns">
+    <button class="src-btn active" id="btn-meteo" onclick="setSource('meteo')">
+      Météo France — Toulouse-Blagnac (extérieur)
+    </button>
+    <button class="src-btn" id="btn-neusta" onclick="setSource('neusta')">
+      Neusta ClimaTrack MKII (intérieur)
+    </button>
+  </div>
+  <span class="src-info" id="src-info">Chargement…</span>
+</div>
+
+<!-- ── Layout ──────────────────────────────────────────────────────────────── -->
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="panel-title">Calendrier thermique</div>
+    <div class="cal-nav">
+      <button class="nav-btn" id="btn-prev-year">&#8249;</button>
+      <span class="cal-year" id="cal-year-label">2024</span>
+      <button class="nav-btn" id="btn-next-year">&#8250;</button>
+    </div>
+    <div id="cal-grid"></div>
+    <div style="margin-top:18px">
+      <div class="panel-title">Echelle Humidex</div>
+      <div id="legend-rows"></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="day-nav">
+      <button class="day-btn" id="btn-prev-day">&#8592; Precedent</button>
+      <div id="date-display">—</div>
+      <input type="date" id="date-input" />
+      <button class="day-btn" id="btn-next-day">Suivant &#8594;</button>
+    </div>
+    <div id="day-content">
+      <div class="no-data-msg">Chargement des donnees…</div>
+    </div>
+  </main>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Footer -->
+<footer>
+  <span>Seuils : <strong>OHCOW 2022</strong> &bull; <strong>ACGIH TLV 2023</strong> &bull; <strong>NIOSH 2016</strong></span>
+  <span>Protocoles : <strong>HAS 2023</strong> &bull; <strong>INRS R-447</strong> &bull; <strong>Decret n 2025-482</strong></span>
+  <span>Humidex : <strong>Masterton &amp; Richardson 1979</strong> — e = 6.112 x 10^(7.5T/(237.7+T)) x HR/100</span>
+  <span style="margin-left:auto">BioSense360 v3.0</span>
+</footer>
+
+<!-- ── Script ──────────────────────────────────────────────────────────────── -->
+<script>
+"use strict";
+
+// ── Systeme d'alarme (SYSTEME_ALARME from production/biosense360/config.py) ──
+const ALARME = {
+  0: {
+    seuil: "HX < 25", niveau: "Conditions Normales", color: "#22c55e",
+    conseil: "Conditions ideales. Aucune restriction thermique.",
+    protocole: [
+      "Aucune mesure de protection thermique requise.",
+      "Hydratation habituelle (~1,5 L/jour — OMS).",
+    ],
+    legal: null
+  },
+  1: {
+    seuil: "25 \u2264 HX < 30", niveau: "Gene legere", color: "#a3e635",
+    conseil: "Hydratez-vous normalement lors d'efforts.",
+    protocole: [
+      "200 mL d'eau fraiche toutes les 30 min d'effort.",
+      "Vetements legers, clairs et respirants.",
+    ],
+    legal: null
+  },
+  2: {
+    seuil: "30 \u2264 HX < 34", niveau: "Vigilance", color: "#facc15",
+    conseil: "Buvez regulierement. Reduisez les efforts au soleil.",
+    protocole: [
+      "Surveillance horaire de la temperature et de l'humidite relative.",
+      "250 mL d'eau fraiche toutes les 20 min (NIOSH ~ 0,75 L/h).",
+      "Reduire les efforts intenses entre 12h et 16h.",
+    ],
+    legal: null
+  },
+  3: {
+    seuil: "34 \u2264 HX < 38", niveau: "Inconfort evident", color: "#fb923c",
+    conseil: "Hydratation active obligatoire. Privilegiez l'ombre.",
+    protocole: [
+      "250 mL d'eau fraiche toutes les 20 min (NIOSH/OSHA — effort modere).",
+      "Pause a l'ombre : 10 min minimum par heure.",
+      "Reporter les travaux lourds avant 10h ou apres 18h (INRS R-447).",
+    ],
+    legal: null
+  },
+  4: {
+    seuil: "38 \u2264 HX < 40", niveau: "Alerte", color: "#f87171",
+    conseil: "15 min de repos par heure. Travaux lourds suspendus.",
+    protocole: [
+      "Cycle obligatoire : 45 min travail / 15 min repos (ACGIH TLV 2023).",
+      "240 mL d'eau fraiche toutes les 20 min.",
+      "Systeme de binome obligatoire — aucun travailleur isole.",
+      "Kit premiers secours chaleur accessible sur site.",
+    ],
+    legal: "Decret n\u00b0 2025-482 : evaluation DUERP chaleur obligatoire. Binome de travail requis. Registre de suivi medical a tenir a jour."
+  },
+  5: {
+    seuil: "40 \u2264 HX < 43", niveau: "Inconfort intense", color: "#ef4444",
+    conseil: "Arret des efforts non essentiels. 30 min repos/heure minimum.",
+    protocole: [
+      "Cycle obligatoire : 30 min travail / 30 min repos (ACGIH TLV 2023).",
+      "250 mL d'eau fraiche toutes les 15 min + electrolytes (plafond : 1,5 L/h).",
+      "Rafraichissement actif : brumisateurs, linges humides sur le cou et les poignets.",
+      "Cessation immediate au moindre symptome : vertiges, confusion, nausees (OHCOW Level 5).",
+    ],
+    legal: "OHCOW Level 5 : retrait immediat des travailleurs vulnerables. Surveillance medicale renforcee obligatoire. Signalement RH requis."
+  },
+  6: {
+    seuil: "43 \u2264 HX < 45", niveau: "Urgence Vitale", color: "#dc2626",
+    conseil: "Tous travaux exterieurs proscrits. Rester dans un espace frais.",
+    protocole: [
+      "AUCUNE activite physique exterieure autorisee (OHCOW Level 6).",
+      "Cycle max : 15 min activite legere / 45 min repos en espace frais (< 26 \u00b0C — ACGIH TLV).",
+      "Verification etat de sante (conscience, sudation) chaque heure.",
+      "SAMU (15) accessible immediatement — numero affiche sur chaque poste.",
+    ],
+    legal: "Decret n\u00b0 2025-482 : arret de travail possible par DREETS. Obligation de mise a disposition d'un local climatise. Risque vital engage."
+  },
+  7: {
+    seuil: "HX \u2265 45", niveau: "Danger Extreme", color: "#991b1b",
+    conseil: "SUSPENSION IMMEDIATE de toute activite. Risque vital.",
+    protocole: [
+      "SUSPENSION TOTALE de toute activite physique (OHCOW Level 7).",
+      "Environnement climatise obligatoire (< 24 \u00b0C) et surveillance continue.",
+      "SAMU (15) au moindre signe : confusion, absence de sueur, T > 39,5 \u00b0C (HAS 2023).",
+      "Coup de chaleur : refroidir immediatement (linges froids cou/aines/aisselles) — mortalite 10-50 % sans PEC (Bouchama & Knochel, NEJM 2002).",
+    ],
+    legal: "Decret n\u00b0 2025-482 : arret immediat obligatoire. Responsabilite penale de l'employeur engagee. Protocole coup de chaleur HAS 2023 a afficher sur site."
+  }
+};
+
+const MONTHS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin",
+                   "Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+const DAYS_FR   = ["L","M","M","J","V","S","D"];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let DATA          = null;
+let source        = "meteo";
+let calYear       = 2025;
+let selectedDate  = null;
+let timelineChart = null;
+let donutChart    = null;
+let activeRow     = null;
+
+ 
+
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+(function () {
+  if (window.DASHBOARD_DATA) {
+    DATA = window.DASHBOARD_DATA;
+    initUI();
+  } else {
+    document.getElementById("day-content").innerHTML =
+      "<div class='no-data-msg'>Donnees introuvables.<br/>" +
+      "Executez d'abord : <code>python prepare_dashboard_data.py</code><br/>" +
+      "puis ouvrez <strong>dashboard.html</strong> depuis le dossier <code>dashboard/</code></div>";
+  }
+})();
+
+function initUI() {
+  const meteoCount  = Object.keys(DATA.meteo_days).length;
+  const neustaCount = Object.keys(DATA.neusta_days).length;
+  document.getElementById("src-info").textContent =
+    "Meteo France : " + meteoCount + " jours  |  Neusta : " + neustaCount + " jours";
+
+  buildLegend();
+
+  document.getElementById("btn-prev-year").onclick = () => { calYear--; buildCalendar(); };
+  document.getElementById("btn-next-year").onclick = () => { calYear++; buildCalendar(); };
+  document.getElementById("btn-prev-day").onclick  = () => navigateDay(-1);
+  document.getElementById("btn-next-day").onclick  = () => navigateDay(+1);
+  document.getElementById("date-input").onchange   = e => showDay(e.target.value);
+
+  // Start on the hottest day in Meteo France data
+  const hotDays = DATA.calendar_meteo
+    .sort((a, b) => b.max_hx - a.max_hx);
+  const startDate = hotDays.length > 0 ? hotDays[0].date
+    : Object.keys(DATA.meteo_days).sort()[0];
+
+  calYear = parseInt(startDate.slice(0, 4));
+  buildCalendar();
+  showDay(startDate);
+}
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+function buildLegend() {
+  document.getElementById("legend-rows").innerHTML =
+    Object.entries(ALARME).map(([cls, a]) =>
+      `<div class="legend-row" onclick="jumpToClass(${cls})" title="Voir la journee la plus chaude de classe ${cls}">
+         <div class="legend-dot" style="background:${a.color}"></div>
+         <span class="legend-text">${a.niveau}</span>
+         <span class="legend-seuil">${a.seuil}</span>
+       </div>`
+    ).join("");
+}
+
+// ── Calendar ──────────────────────────────────────────────────────────────────
+function buildCalendar() {
+  document.getElementById("cal-year-label").textContent = calYear;
+  const dayMap = getDayMap();
+  const el     = document.getElementById("cal-grid");
+  el.innerHTML = "";
+
+  for (let m = 0; m < 12; m++) {
+    const wrap = document.createElement("div");
+    wrap.className = "cal-month";
+
+    const header = DAYS_FR.map(d => `<span>${d}</span>`).join("");
+    wrap.innerHTML =
+      `<div class="cal-month-name">${MONTHS_FR[m]}</div>
+       <div class="cal-week-header">${header}</div>
+       <div class="cal-days-grid" id="cm${m}"></div>`;
+    el.appendChild(wrap);
+
+    const grid      = wrap.querySelector("#cm" + m);
+    const firstDay  = new Date(calYear, m, 1);
+    const startPad  = (firstDay.getDay() + 6) % 7;  // Monday = 0
+    const daysCount = new Date(calYear, m + 1, 0).getDate();
+
+    for (let p = 0; p < startPad; p++) {
+      const pad = document.createElement("div");
+      pad.className = "cal-day empty";
+      grid.appendChild(pad);
+    }
+
+    for (let d = 1; d <= daysCount; d++) {
+      const date  = calYear + "-" +
+                    String(m + 1).padStart(2, "0") + "-" +
+                    String(d).padStart(2, "0");
+      const cell  = document.createElement("div");
+      cell.className = "cal-day" + (date === selectedDate ? " selected" : "");
+      cell.dataset.date = date;
+
+      if (dayMap[date] !== undefined) {
+        const cls = dayMap[date];
+        cell.style.background = ALARME[cls].color;
+        cell.onclick = () => showDay(date);
+        cell.addEventListener("mousemove", ev =>
+          showTooltip(ev, date + " &mdash; Classe " + cls + " : " + ALARME[cls].niveau));
+        cell.addEventListener("mouseleave", hideTooltip);
+      } else {
+        cell.classList.add("no-data");
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function getDayMap() {
+  const cal = source === "meteo" ? DATA.calendar_meteo : DATA.calendar_neusta;
+  const map = {};
+  for (const d of cal) map[d.date] = d.max_cls;
+  return map;
+}
+
+// ── Source ────────────────────────────────────────────────────────────────────
+function setSource(src) {
+  source = src;
+  document.getElementById("btn-meteo").classList.toggle("active", src === "meteo");
+  document.getElementById("btn-neusta").classList.toggle("active", src === "neusta");
+
+  // Chercher un jour disponible dans la nouvelle source
+  const days   = src === "meteo" ? DATA.meteo_days : DATA.neusta_days;
+  const dates  = Object.keys(days).sort();
+
+  if (dates.length === 0) {
+    buildCalendar();
+    document.getElementById("day-content").innerHTML =
+      "<div class='no-data-msg'>Aucune donnee disponible pour cette source.</div>";
+    return;
+  }
+
+  // Si la date courante existe dans la nouvelle source, la garder ; sinon prendre la plus chaude
+  if (days[selectedDate]) {
+    buildCalendar();
+    showDay(selectedDate);
+  } else {
+    const cal     = src === "meteo" ? DATA.calendar_meteo : DATA.calendar_neusta;
+    const hottest = cal.sort((a, b) => b.max_hx - a.max_hx)[0];
+    const newDate = hottest ? hottest.date : dates[0];
+    calYear = parseInt(newDate.slice(0, 4));
+    buildCalendar();
+    showDay(newDate);
+  }
+}
+
+// ── Day navigation ────────────────────────────────────────────────────────────
+function navigateDay(delta) {
+  if (!selectedDate) return;
+  const days  = source === "meteo" ? DATA.meteo_days : DATA.neusta_days;
+  const dates = Object.keys(days).sort();
+  // Si la date courante n'existe pas dans cette source, aller au début ou à la fin
+  let idx = dates.indexOf(selectedDate);
+  if (idx === -1) {
+    idx = delta > 0 ? -1 : dates.length;
+  }
+  const next = dates[idx + delta];
+  if (next) showDay(next);
+}
+
+function jumpToClass(cls) {
+  const cal   = source === "meteo" ? DATA.calendar_meteo : DATA.calendar_neusta;
+  const match = cal.filter(d => d.max_cls === parseInt(cls))
+                   .sort((a, b) => b.max_hx - a.max_hx);
+  if (match.length > 0) {
+    showDay(match[0].date);
+  } else {
+    const srcName = source === "meteo" ? "Meteo France" : "Neusta (capteur interieur)";
+    document.getElementById("day-content").innerHTML =
+      `<div class='no-data-msg'>Aucun jour de classe <strong>${cls}</strong> (${ALARME[cls].niveau})<br/>
+       dans la source <strong>${srcName}</strong>.<br/>
+       <small style='color:var(--muted)'>Les capteurs Neusta sont installes en interieur (T 16-24 deg C) : seules les classes 0 et 1 sont observables.</small></div>`;
+  }
+}
+
+// ── Show Day ──────────────────────────────────────────────────────────────────
+function showDay(date) {
+  selectedDate = date;
+  document.getElementById("date-input").value = date;
+
+  // Update calendar highlight
+  document.querySelectorAll(".cal-day.selected").forEach(e => e.classList.remove("selected"));
+  const cell = document.querySelector(".cal-day[data-date='" + date + "']");
+  if (cell) cell.classList.add("selected");
+
+  const y = parseInt(date.slice(0, 4));
+  if (y !== calYear) { calYear = y; buildCalendar(); }
+
+  const days = source === "meteo" ? DATA.meteo_days : DATA.neusta_days;
+  const day  = days[date];
+
+  if (!day) {
+    document.getElementById("day-content").innerHTML =
+      `<div class="no-data-msg">Aucune donnee disponible pour le <strong>${fmtDate(date)}</strong><br/>
+       <small>(source : ${source === "meteo" ? "Meteo France" : "Neusta"})</small></div>`;
+    return;
+  }
+  renderDay(date, day);
+}
+
+// ── Render Day ────────────────────────────────────────────────────────────────
+function renderDay(date, day) {
+  const s      = day.stats;
+  const maxCls = s.max_cls;
+  const alarm  = ALARME[maxCls];
+
+  document.getElementById("date-display").innerHTML =
+    fmtDate(date) +
+    `<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:12px">${day.source}</span>`;
+
+  document.getElementById("day-content").innerHTML = buildDayHTML(day, maxCls, alarm, s);
+
+  // Charts
+  if (timelineChart) { timelineChart.destroy(); timelineChart = null; }
+  if (donutChart)    { donutChart.destroy();    donutChart    = null; }
+  activeRow = null;
+
+  buildTimelineChart(day);
+  buildDonutChart(s);
+
+  // Recommendations for max class (default)
+  renderRec(maxCls);
+  requestAnimationFrame(() => {
+    initOrUpdateMap();
+  });
+  // renderTemporalHeatmap();
+  // renderRiskMap(date, day);
+
+  // Hourly table interactions
+  document.querySelectorAll(".tbl-row").forEach(tr => {
+    tr.addEventListener("click", function () {
+      const cls = parseInt(this.dataset.cls);
+      document.querySelectorAll(".tbl-row").forEach(r => r.classList.remove("active-row"));
+      this.classList.add("active-row");
+      renderRec(cls);
+    });
+  });
+}
+
+// ── Build Day HTML ────────────────────────────────────────────────────────────
+function buildDayHTML(day, maxCls, alarm, s) {
+  const nCls = s.n_cls;
+
+  // Stats row
+  const statsHTML = `
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Classe maximale</div>
+      <div class="stat-value" style="color:${alarm.color}">${maxCls}</div>
+      <div class="stat-sub">${alarm.niveau}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Humidex max</div>
+      <div class="stat-value">${s.max_hx}<span class="stat-unit"> HX</span></div>
+      <div class="stat-sub">seuil classe ${maxCls} : ${alarm.seuil}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Temperature</div>
+      <div class="stat-value">${s.max_T}<span class="stat-unit"> \u00b0C</span></div>
+      <div class="stat-sub">min : ${s.min_T} \u00b0C</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Humidite moy.</div>
+      <div class="stat-value">${s.avg_HR}<span class="stat-unit"> %</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Releves</div>
+      <div class="stat-value">${day.obs.length}</div>
+      <div class="stat-sub">observations</div>
+    </div>
+  </div>`;
+
+  // Alarm badge
+  const badgeHTML = `
+  <div id="alarm-badge" style="background:${alarm.color}18;border-color:${alarm.color}55">
+    <div class="badge-cls" style="color:${alarm.color}">${maxCls}</div>
+    <div>
+      <div class="badge-niveau">${alarm.niveau}</div>
+      <div class="badge-seuil">${alarm.seuil} &mdash; Pic : HX ${s.max_hx} &mdash; T max : ${s.max_T} \u00b0C</div>
+    </div>
+    <div class="badge-src">Classe de reference du jour<br/><span style="font-size:10px">(valeur maximale enregistree)</span></div>
+  </div>`;
+
+  // Hourly table
+  const rows = day.obs.map((r, i) =>
+    `<tr class="tbl-row${i === 0 ? "" : ""}" data-cls="${r.cls}" style="cursor:pointer">
+       <td><strong>${String(r.h).padStart(2,"0")}h00</strong></td>
+       <td>${r.T}</td>
+       <td>${r.HR}</td>
+       <td><strong>${r.HX}</strong></td>
+       <td><span class="cls-pill" style="background:${ALARME[r.cls].color}">${r.cls}</span></td>
+       <td style="color:${ALARME[r.cls].color};font-weight:500">${ALARME[r.cls].niveau}</td>
+     </tr>`
+  ).join("");
+
+  return statsHTML + badgeHTML + `
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Evolution horaire &mdash; Humidex &amp; Temperature</div>
+      <div style="position:relative;height:210px"><canvas id="timeline-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Repartition des classes</div>
+      <div style="height:210px;display:flex;align-items:center;justify-content:center">
+        <canvas id="donut-chart" style="max-width:190px;max-height:190px"></canvas>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="map-section">
+    <div class="map-card">
+      <div class="map-title">Cartographie des points de mesure</div>
+      <div class="map-zones-info">
+        Jour sélectionné : ${selectedDate}
+      </div>
+      <div id="biosense-map"></div>
+     <div class="map-zones-info">
+  Source Météo France : visualisation multi-stations réelle par date.
+  Source Neusta : visualisation du point de mesure intérieur.
+</div>
+    </div>
+  </div>
+    
+
+  <div style="margin-bottom:14px">
+    <div class="panel-title">Recommandations &mdash; <span id="rec-cls-label">Classe ${maxCls} (pic journalier)</span></div>
+    <div id="rec-container"></div>
+  </div>
+
+  <div>
+    <div class="panel-title">Detail horaire &mdash; cliquer sur une ligne pour voir ses recommandations</div>
+    <div class="chart-card" style="padding:0;overflow:hidden">
+      <table class="timeline-table">
+        <thead>
+          <tr>
+            <th>Heure</th><th>T (\u00b0C)</th><th>HR (%)</th>
+            <th>Humidex</th><th>Classe</th><th>Niveau</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ── Timeline chart ─────────────────────────────────────────────────────────────
+function buildTimelineChart(day) {
+  const labels    = day.obs.map(r => String(r.h).padStart(2, "0") + "h");
+  const hxVals    = day.obs.map(r => r.HX);
+  const tVals     = day.obs.map(r => r.T);
+  const bgColors  = day.obs.map(r => ALARME[r.cls].color + "cc");
+  const bdrColors = day.obs.map(r => ALARME[r.cls].color);
+
+  timelineChart = new Chart(document.getElementById("timeline-chart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Humidex",
+          data: hxVals,
+          backgroundColor: bgColors,
+          borderColor: bdrColors,
+          borderWidth: 1,
+          yAxisID: "yHX",
+          order: 2
+        },
+        {
+          type: "line",
+          label: "Temperature (degC)",
+          data: tVals,
+          borderColor: "#58a6ff",
+          backgroundColor: "transparent",
+          borderWidth: 2,
+          pointBackgroundColor: "#58a6ff",
+          pointRadius: 4,
+          tension: 0.4,
+          yAxisID: "yT",
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "#8b949e", font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            afterBody: (items) => {
+              const i = items[0].dataIndex;
+              if (day.obs[i]) {
+                const o = day.obs[i];
+                return [
+                  "Classe " + o.cls + " : " + ALARME[o.cls].niveau,
+                  "HR : " + o.HR + " %"
+                ];
+              }
+              return [];
+            }
+          }
+        }
+      },
+      scales: {
+        yHX: {
+          position: "left",
+          grid: { color: "#30363d" },
+          ticks: { color: "#8b949e", font: { size: 10 } },
+          title: { display: true, text: "Humidex", color: "#8b949e", font: { size: 10 } }
+        },
+        yT: {
+          position: "right",
+          grid: { drawOnChartArea: false },
+          ticks: { color: "#58a6ff", font: { size: 10 } },
+          title: { display: true, text: "Temperature (degC)", color: "#58a6ff", font: { size: 10 } }
+        },
+        x: {
+          grid: { color: "#30363d" },
+          ticks: { color: "#8b949e", font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+// ── Donut chart ───────────────────────────────────────────────────────────────
+function buildDonutChart(s) {
+  const labels = [], data = [], colors = [];
+  for (let c = 0; c < 8; c++) {
+    const v = parseInt(s.n_cls[String(c)] || 0);
+    if (v > 0) {
+      labels.push("Cls " + c);
+      data.push(v);
+      colors.push(ALARME[c].color);
+    }
+  }
+  donutChart = new Chart(document.getElementById("donut-chart"), {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{
+        data, backgroundColor: colors,
+        borderWidth: 1, borderColor: "#161b22"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#8b949e", font: { size: 10 }, boxWidth: 10, padding: 6 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (i) => {
+              const c = parseInt(i.label.slice(4));
+              return " " + ALARME[c].niveau + " : " + i.raw + " obs";
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Render Recommendations ────────────────────────────────────────────────────
+function renderRec(cls) {
+  const a   = ALARME[cls];
+  const lbl = document.getElementById("rec-cls-label");
+  if (lbl) lbl.textContent = "Classe " + cls + " \u2014 " + a.niveau;
+
+  const container = document.getElementById("rec-container");
+  if (!container) return;
+
+  const stepColor = (cls <= 1) ? "#22c55e" : (cls <= 3) ? "#fb923c" : "#f87171";
+
+  const legalBlock = a.legal ? `
+    <div class="legal-warning">
+      <strong>Obligations legales (Decret n\u00b0 2025-482 / OHCOW)</strong><br/>
+      ${a.legal}
+    </div>` : "";
+
+
+
+  const vulnBlock = (cls >= 5) ? `
+    <div class="vuln-card">
+      <div class="rec-card-title" style="color:#f87171;border-bottom-color:#dc262644">
+        Populations vulnerables &mdash; protocole de classe ${Math.min(7, cls + 2)} applicable des la classe ${cls}
+      </div>
+      <div class="vuln-tags">
+        ${["Personnes agees (>65 ans)", "Femmes enceintes", "Nourrissons (<1 an)",
+           "Acclimatation insuffisante", "Obesite (IMC >= 30)", "Cardiopathie / HTA",
+           "Traitement diuretique / anticholinergique", "Pathologie respiratoire chronique",
+           "Effort physique intense non habituel"]
+          .map(p => `<span class="vuln-tag">${p}</span>`).join("")}
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+        Ces personnes atteignent le seuil de danger a des niveaux d'Humidex inferieurs de ~5 unites
+        (NIOSH 2016, HAS 2023). Appliquer les mesures de la classe ${Math.min(7, cls + 2)} des maintenant.
+      </div>
+    </div>` : "";
+
+  container.innerHTML = `
+  <div class="rec-grid">
+    <div class="rec-card" style="border-left:3px solid ${a.color}">
+      <div class="rec-card-title">Conseil immediat</div>
+      <div class="rec-conseil" style="color:${a.color}">${a.conseil}</div>
+      ${legalBlock}
+    </div>
+    <div class="rec-card">
+      <div class="rec-card-title">Protocole de securite (${a.protocole.length} actions)</div>
+      <ol class="rec-protocole">
+        ${a.protocole.map((p, i) =>
+          `<li>
+             <span class="rec-step-num" style="background:${stepColor}">${i + 1}</span>
+             <span>${p}</span>
+           </li>`
+        ).join("")}
+      </ol>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted)">
+        Ref. : OHCOW (2022) &bull; ACGIH TLV (2023) &bull; NIOSH DHHS-2016-106 &bull; HAS (2023) &bull; Decret 2025-482
+      </div>
+    </div>
+  </div>
+  ${vulnBlock}`;
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function fmtDate(d) {
+  const [y, m, dd] = d.split("-");
+  const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(dd));
+  return date.toLocaleDateString("fr-FR", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+}
+
+function showTooltip(e, html) {
+  const t = document.getElementById("tooltip");
+  t.innerHTML = html;
+  t.style.display = "block";
+  t.style.left = (e.clientX + 14) + "px";
+  t.style.top  = (e.clientY + 14) + "px";
+}
+function hideTooltip() {
+  document.getElementById("tooltip").style.display = "none";
+}
+
+
+// -- Render Heatmap (Cartographie composant)
+function renderTemporalHeatmap() {
+  const container = document.getElementById("temporal-heatmap");
+  if (!container) return;
+
+  const days = source === "meteo" ? DATA.meteo_days : DATA.neusta_days;
+
+  const dates = Object.keys(days).sort().slice(-14); // останні 14 днів
+
+  let html = `
+    <div style="display:grid;grid-template-columns:80px repeat(24, 1fr);gap:2px;font-size:10px">
+  `;
+
+  // Header (heures)
+  html += `<div></div>`;
+  for (let h = 0; h < 24; h++) {
+    html += `<div style="text-align:center;color:#8b949e">${h}</div>`;
+  }
+
+  // Rows (jours)
+  dates.forEach(date => {
+    const day = days[date];
+
+    html += `<div style="color:#8b949e;padding-right:4px">${date.slice(5)}</div>`;
+
+    for (let h = 0; h < 24; h++) {
+      const obs = day.obs.find(o => o.h === h);
+
+      if (obs) {
+        const color = ALARME[obs.cls].color;
+
+        html += `
+          <div 
+            style="height:16px;background:${color};cursor:pointer"
+            title="${date} ${h}h — HX ${obs.HX} — ${ALARME[obs.cls].niveau}"
+            onclick="showDay('${date}')"
+          ></div>
+        `;
+      } else {
+        html += `<div style="height:16px;background:#1c2230"></div>`;
+      }
+    }
+  });
+
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
+
+
+// MAP COMPONENT 
+let biosenseMap = null;
+let biosenseMarkersLayer = null;
+let biosenseZonesLayer = null;
+let biosenseHoverTooltip = null;
+
+const MAP_COLORS = ["#22c55e","#a3e635","#facc15","#fb923c","#f87171","#ef4444","#dc2626","#991b1b"];
+const MAP_LEVELS = [
+  "Conditions Normales","Gêne légère","Vigilance","Inconfort évident",
+  "Alerte","Inconfort intense","Urgence Vitale","Danger Extrême"
+];
+ 
+
+ 
+
+// function getCurrentDayData() {
+//   if (!selectedDate) return null;
+//   const days = source === "neusta" ? DATA.neusta_days : DATA.meteo_days;
+//   return days ? days[selectedDate] || null : null;
+// }
+
+// function initOrUpdateMap() {
+//   const container = document.getElementById("biosense-map");
+//   if (!container || !window.L) return;
+
+//   const data = getCurrentDayData();
+
+//   if (container._leaflet_id) {
+//     container._leaflet_id = null;
+//   }
+
+//   if (biosenseMap) {
+//     biosenseMap.remove();
+//     biosenseMap = null;
+//   }
+
+//   biosenseMap = L.map("biosense-map", {
+//     center: [43.6047, 1.4442],
+//     zoom: 13,
+//     zoomControl: true,
+//     attributionControl: false
+//   });
+
+//   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+//     maxZoom: 19,
+//     subdomains: "abcd"
+//   }).addTo(biosenseMap);
+
+//   biosenseMarkersLayer = L.layerGroup().addTo(biosenseMap);
+//   biosenseZonesLayer = L.layerGroup().addTo(biosenseMap);
+
+//   if (!biosenseHoverTooltip) {
+//     biosenseHoverTooltip = document.createElement("div");
+//     biosenseHoverTooltip.className = "tooltip";
+//     biosenseHoverTooltip.style.pointerEvents = "none";
+//     document.body.appendChild(biosenseHoverTooltip);
+//   }
+
+//   const stations = MAP_STATIONS.filter(st => st.source === source);
+
+//   stations.forEach(st => {
+//     const cls = data ? data.stats.max_cls : 0;
+//     const color = MAP_COLORS[cls];
+//     const radius = 12 + cls * 3;
+
+//     const marker = L.circleMarker([st.lat, st.lng], {
+//       radius,
+//       fillColor: color,
+//       fillOpacity: 0.75,
+//       color,
+//       weight: 2,
+//       opacity: 0.95
+//     }).addTo(biosenseMarkersLayer);
+
+//     marker.on("mouseover", function (e) {
+//       biosenseHoverTooltip.innerHTML = data
+//         ? `<strong>${st.name}</strong><br>Humidex max : <span style="color:${color};font-weight:700">${data.stats.max_hx}</span><br>Classe : <span class="popup-cls-pill" style="background:${color}">${cls}</span> ${MAP_LEVELS[cls]}`
+//         : `<strong>${st.name}</strong><br>Pas de données`;
+//       biosenseHoverTooltip.style.display = "block";
+//       biosenseHoverTooltip.style.left = (e.originalEvent.clientX + 14) + "px";
+//       biosenseHoverTooltip.style.top = (e.originalEvent.clientY - 10) + "px";
+//     });
+
+//     marker.on("mousemove", function (e) {
+//       biosenseHoverTooltip.style.left = (e.originalEvent.clientX + 14) + "px";
+//       biosenseHoverTooltip.style.top = (e.originalEvent.clientY - 10) + "px";
+//     });
+
+//     marker.on("mouseout", function () {
+//       biosenseHoverTooltip.style.display = "none";
+//     });
+
+//     marker.on("click", function () {
+//       biosenseHoverTooltip.style.display = "none";
+
+//       if (!data) {
+//         marker.bindPopup(`<div class="popup-title">${st.name}</div><div class="popup-source">Pas de données pour ${selectedDate || "cette date"}</div>`).openPopup();
+//         return;
+//       }
+
+//       const popupHTML = `
+//         <div style="max-width:320px">
+//           <div class="popup-title">${st.name}</div>
+//           <div class="popup-source">${st.description}</div>
+//           <div class="popup-source">${selectedDate}</div>
+//           <div class="popup-row"><span class="popup-label">Humidex max</span><span class="popup-value" style="color:${color}">${data.stats.max_hx}</span></div>
+//           <div class="popup-row"><span class="popup-label">Classe max</span><span class="popup-value"><span class="popup-cls-pill" style="background:${color}">${cls}</span> ${MAP_LEVELS[cls]}</span></div>
+//           <div class="popup-row"><span class="popup-label">Température</span><span class="popup-value">${data.stats.min_T}°C → ${data.stats.max_T}°C</span></div>
+//           <div class="popup-row"><span class="popup-label">Humidité moy.</span><span class="popup-value">${data.stats.avg_HR}%</span></div>
+//           <div class="popup-row"><span class="popup-label">Observations</span><span class="popup-value">${data.obs.length}</span></div>
+//         </div>
+//       `;
+
+//       marker.bindPopup(popupHTML, { maxWidth: 360 }).openPopup();
+//     });
+//   });
+
+//   if (data) {
+//     MAP_ZONES.forEach(zone => {
+//       const station = MAP_STATIONS.find(s => s.id === zone.stationId);
+//       if (!station || station.source !== source) return;
+
+//       const cls = data.stats.max_cls;
+//       const color = MAP_COLORS[cls];
+
+//       L.polygon(zone.coords, {
+//         color,
+//         weight: 1.5,
+//         opacity: 0.6,
+//         fillColor: color,
+//         fillOpacity: 0.14,
+//         dashArray: "5 5"
+//       })
+//       .bindTooltip(
+//         `<strong>${zone.name}</strong><br>Classe ${cls} — ${MAP_LEVELS[cls]}<br>HX max : ${data.stats.max_hx}`,
+//         { sticky: true }
+//       )
+//       .addTo(biosenseZonesLayer);
+//     });
+//   }
+
+//   const bounds = L.latLngBounds([]);
+//   stations.forEach(s => bounds.extend([s.lat, s.lng]));
+//   MAP_ZONES.forEach(z => {
+//     const station = MAP_STATIONS.find(s => s.id === z.stationId);
+//     if (station && station.source === source) {
+//       z.coords.forEach(c => bounds.extend(c));
+//     }
+//   });
+
+//   if (bounds.isValid()) {
+//     biosenseMap.fitBounds(bounds.pad(0.25));
+//   }
+
+//   setTimeout(() => biosenseMap.invalidateSize(), 100);
+// }
+
+function initOrUpdateMap() {
+  const container = document.getElementById("biosense-map");
+  if (!container || !window.L || !DATA || !selectedDate) return;
+
+  if (biosenseMap) {
+    biosenseMap.remove();
+    biosenseMap = null;
+  }
+
+  container.innerHTML = "";
+
+  // ---------------------------
+  // CAS 1 : source = meteo
+  // ---------------------------
+  if (source === "meteo") {
+    const points = DATA.map_points_meteo?.[selectedDate] || [];
+
+    biosenseMap = L.map(container, {
+    center: [43.6045, 1.4440], // Toulouse centre
+    zoom: 11,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19,
+      subdomains: "abcd"
+    }).addTo(biosenseMap);
+
+    biosenseMarkersLayer = L.layerGroup().addTo(biosenseMap);
+
+    if (!biosenseHoverTooltip) {
+      biosenseHoverTooltip = document.createElement("div");
+      biosenseHoverTooltip.className = "tooltip";
+      biosenseHoverTooltip.style.pointerEvents = "none";
+      document.body.appendChild(biosenseHoverTooltip);
+    }
+
+    if (!points.length) {
+      setTimeout(() => biosenseMap.invalidateSize(), 100);
+      return;
+    }
+
+    const bounds = L.latLngBounds([]);
+
+    points.forEach((p) => {
+      const cls = Number(p.vivabilite ?? 0);
+      const color = MAP_COLORS[cls] || MAP_COLORS[0];
+      const radius = 4 + cls * 1.8;
+
+      const marker = L.circleMarker([p.lat, p.lng], {
+        radius,
+        fillColor: color,
+        fillOpacity: 0.8,
+        color,
+        weight: 1.5,
+        opacity: 0.95
+      }).addTo(biosenseMarkersLayer);
+
+      marker.on("mouseover", function (e) {
+        biosenseHoverTooltip.innerHTML = `
+          <strong>${p.name}</strong><br>
+          Humidex : <span style="color:${color};font-weight:700">${p.humidex}</span><br>
+          Classe : <span class="popup-cls-pill" style="background:${color}">${cls}</span> ${MAP_LEVELS[cls]}
+        `;
+        biosenseHoverTooltip.style.display = "block";
+        biosenseHoverTooltip.style.left = (e.originalEvent.clientX + 14) + "px";
+        biosenseHoverTooltip.style.top = (e.originalEvent.clientY - 10) + "px";
+      });
+
+      marker.on("mousemove", function (e) {
+        biosenseHoverTooltip.style.left = (e.originalEvent.clientX + 14) + "px";
+        biosenseHoverTooltip.style.top = (e.originalEvent.clientY - 10) + "px";
+      });
+
+      marker.on("mouseout", function () {
+        biosenseHoverTooltip.style.display = "none";
+      });
+
+      marker.on("click", function () {
+        biosenseHoverTooltip.style.display = "none";
+
+        const popupHTML = `
+          <div style="min-width:240px">
+            <div class="popup-title">${p.name}</div>
+            <div class="popup-source">${selectedDate}</div>
+            <div class="popup-row">
+              <span class="popup-label">Station ID</span>
+              <span class="popup-value">${p.id}</span>
+            </div>
+            <div class="popup-row">
+              <span class="popup-label">Température</span>
+              <span class="popup-value">${p.temperature} °C</span>
+            </div>
+            <div class="popup-row">
+              <span class="popup-label">Humidité</span>
+              <span class="popup-value">${p.humidity} %</span>
+            </div>
+            <div class="popup-row">
+              <span class="popup-label">Humidex</span>
+              <span class="popup-value">${p.humidex}</span>
+            </div>
+            <div class="popup-row">
+              <span class="popup-label">Classe</span>
+              <span class="popup-value">
+                <span class="popup-cls-pill" style="background:${color}">${cls}</span>
+                ${MAP_LEVELS[cls]}
+              </span>
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupHTML, { maxWidth: 320 }).openPopup();
+      });
+
+      bounds.extend([p.lat, p.lng]);
+    });
+
+    if (bounds.isValid()) {
+      biosenseMap.setView([43.6045, 1.4440], 11);
+    }
+
+    setTimeout(() => biosenseMap.invalidateSize(), 120);
+    return;
+  }
+
+  // ---------------------------
+  // CAS 2 : source = neusta
+  // ---------------------------
+  const day = DATA.neusta_days?.[selectedDate];
+
+  biosenseMap = L.map(container, {
+    center: [43.6045, 1.4440], // Toulouse centre
+    zoom: 11,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 19,
+    subdomains: "abcd"
+  }).addTo(biosenseMap);
+
+  biosenseMarkersLayer = L.layerGroup().addTo(biosenseMap);
+
+  const lat = 43.6045;
+  const lng = 1.4440;
+  const cls = day ? Number(day.stats.max_cls) : 0;
+  const color = MAP_COLORS[cls] || MAP_COLORS[0];
+
+  const marker = L.circleMarker([lat, lng], {
+    radius: 12,
+    fillColor: color,
+    fillOpacity: 0.85,
+    color,
+    weight: 2,
+    opacity: 1
+  }).addTo(biosenseMarkersLayer);
+
+  marker.bindPopup(day ? `
+    <div style="min-width:240px">
+      <div class="popup-title">Neusta ClimaTrack MKII</div>
+      <div class="popup-source">${selectedDate}</div>
+      <div class="popup-row">
+        <span class="popup-label">Humidex max</span>
+        <span class="popup-value">${day.stats.max_hx}</span>
+      </div>
+      <div class="popup-row">
+        <span class="popup-label">Classe max</span>
+        <span class="popup-value">
+          <span class="popup-cls-pill" style="background:${color}">${cls}</span>
+          ${MAP_LEVELS[cls]}
+        </span>
+      </div>
+      <div class="popup-row">
+        <span class="popup-label">Température</span>
+        <span class="popup-value">${day.stats.min_T}°C → ${day.stats.max_T}°C</span>
+      </div>
+      <div class="popup-row">
+        <span class="popup-label">Humidité moy.</span>
+        <span class="popup-value">${day.stats.avg_HR}%</span>
+      </div>
+    </div>
+  ` : `
+    <div class="popup-title">Neusta ClimaTrack MKII</div>
+    <div class="popup-source">Pas de données pour ${selectedDate}</div>
+  `);
+
+  setTimeout(() => biosenseMap.invalidateSize(), 120);
+}
+// function renderRiskMap(date, day) {
+//   const s = day.stats;
+//   const maxCls = s.max_cls;
+
+//   // Points de référence
+//   const toulouseCenter = [43.6045, 1.4440];
+//   const meteoCoords = [43.6293, 1.3630];   // Toulouse-Blagnac
+//   const neustaCoords = [43.6100, 1.4550];  // site indicatif
+
+//   const pointColor =
+//     maxCls <= 1 ? "#22c55e" :
+//     maxCls <= 3 ? "#facc15" :
+//     maxCls <= 5 ? "#fb923c" :
+//                   "#ef4444";
+
+//   setTimeout(() => {
+//     const container = document.getElementById("map");
+//     if (!container || !window.L) return;
+
+//     if (container._leaflet_id) {
+//       container._leaflet_id = null;
+//     }
+
+//     if (map) {
+//       map.remove();
+//       map = null;
+//       legendControl = null;
+//     }
+
+//     map = L.map("map").setView(toulouseCenter, 11);
+
+//     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+//       attribution: "&copy; OpenStreetMap contributors"
+//     }).addTo(map);
+
+//     // Marker météo
+//     const meteoMarker = L.circleMarker(meteoCoords, {
+//       radius: 11,
+//       color: pointColor,
+//       fillColor: pointColor,
+//       fillOpacity: 0.9,
+//       weight: 2
+//     }).addTo(map);
+
+//     meteoMarker.bindPopup(`
+//       <strong>Météo France — Toulouse-Blagnac</strong><br>
+//       Date : ${date}<br>
+//       Température max : ${s.max_T} °C<br>
+//       Humidité moyenne : ${s.avg_HR} %<br>
+//       Humidex max : ${s.max_hx}<br>
+//       Classe : ${maxCls} — ${ALARME[maxCls].niveau}
+//     `);
+
+//     // Marker Neusta
+//     const neustaMarker = L.circleMarker(neustaCoords, {
+//       radius: 11,
+//       color: "#58a6ff",
+//       fillColor: "#58a6ff",
+//       fillOpacity: 0.9,
+//       weight: 2
+//     }).addTo(map);
+
+//     neustaMarker.bindPopup(`
+//       <strong>Neusta — site intérieur</strong><br>
+//       Point de mesure local / référence capteur
+//     `);
+
+//     // Lien visuel léger entre les 2 points
+//     const linkLine = L.polyline([meteoCoords, neustaCoords], {
+//       color: "#8b949e",
+//       weight: 2,
+//       opacity: 0.5,
+//       dashArray: "6, 6"
+//     }).addTo(map);
+
+//     // Petit cercle contextuel discret sur la zone urbaine
+//     const contextCircle = L.circle(toulouseCenter, {
+//       radius: 2500,
+//       color: pointColor,
+//       fillColor: pointColor,
+//       fillOpacity: 0.08,
+//       weight: 1
+//     }).addTo(map);
+
+//     contextCircle.bindPopup(`
+//       <strong>Zone urbaine de référence</strong><br>
+//       Visualisation synthétique du niveau de risque du jour<br>
+//       Classe : ${maxCls} — ${ALARME[maxCls].niveau}
+//     `);
+
+//     // Légende
+//     const legendHtml = `
+//       <div style="font-size:12px;line-height:1.55">
+//         <strong>Légende</strong><br>
+//         <span style="color:#22c55e">●</span> Faible risque<br>
+//         <span style="color:#facc15">●</span> Vigilance<br>
+//         <span style="color:#fb923c">●</span> Inconfort<br>
+//         <span style="color:#ef4444">●</span> Risque élevé<br><br>
+//         <span style="color:#58a6ff">●</span> Site intérieur Neusta
+//       </div>
+//     `;
+
+//     legendControl = L.control({ position: "bottomright" });
+//     legendControl.onAdd = function () {
+//       const div = L.DomUtil.create("div");
+//       div.style.background = "#161b22";
+//       div.style.border = "1px solid #30363d";
+//       div.style.borderRadius = "8px";
+//       div.style.padding = "10px 12px";
+//       div.style.color = "#e6edf3";
+//       div.style.boxShadow = "0 4px 12px rgba(0,0,0,0.35)";
+//       div.innerHTML = legendHtml;
+//       return div;
+//     };
+//     legendControl.addTo(map);
+
+//     // Adapter la vue aux 2 points
+//     const bounds = L.latLngBounds([meteoCoords, neustaCoords]);
+//     map.fitBounds(bounds.pad(0.8));
+
+//     map.invalidateSize();
+//   }, 50);
+
+//   // ── MAP COMPONENT ─────────────────────────────────────────────────────────
+// (function () {
+//   "use strict";
+
+//   const COLORS = ["#22c55e","#a3e635","#facc15","#fb923c","#f87171","#ef4444","#dc2626","#991b1b"];
+//   const NIVEAUX = [
+//     "Conditions Normales","Gêne légère","Vigilance","Inconfort évident",
+//     "Alerte","Inconfort intense","Urgence Vitale","Danger Extrême"
+//   ];
+//   const SEUILS_LABELS = ["HX<25","25≤HX<30","30≤HX<34","34≤HX<38","38≤HX<40","40≤HX<43","43≤HX<45","HX≥45"];
+
+//   // ── Réelles coordonnées des capteurs ─────────────────────────────────────
+//   // Météo France — station Toulouse-Blagnac (aéroport)
+//   const METEO_STATION = {
+//     id: "meteo-blagnac",
+//     name: "Météo France — Toulouse-Blagnac",
+//     lat: 43.6211,
+//     lng: 1.3789,
+//     source: "meteo",
+//     description: "Station météorologique officielle, aéroport Toulouse-Blagnac"
+//   };
+
+//   // Neusta ClimaTrack — bureau Neusta, Toulouse centre
+//   const NEUSTA_STATION = {
+//     id: "neusta-climatrack",
+//     name: "Neusta ClimaTrack MKII",
+//     lat: 43.6045,
+//     lng: 1.4440,
+//     source: "neusta",
+//     description: "Capteur intérieur — bureau Neusta, Toulouse"
+//   };
+
+//   const ALL_STATIONS = [METEO_STATION, NEUSTA_STATION];
+
+//   // ── Zones réelles de Toulouse ────────────────────────────────────────────
+//   const TOULOUSE_ZONES = [
+//     {
+//       name: "Aéroport Blagnac",
+//       coords: [[43.6300,1.3550],[43.6300,1.4050],[43.6100,1.4050],[43.6100,1.3550]],
+//       stationId: "meteo-blagnac"
+//     },
+//     {
+//       name: "Centre-ville Toulouse",
+//       coords: [[43.6120,1.4300],[43.6120,1.4600],[43.5950,1.4600],[43.5950,1.4300]],
+//       stationId: "neusta-climatrack"
+//     },
+//     {
+//       name: "Capitole — Quartier historique",
+//       coords: [[43.6080,1.4380],[43.6080,1.4520],[43.6010,1.4520],[43.6010,1.4380]],
+//       stationId: "neusta-climatrack"
+//     }
+//   ];
+
+//   // ── State ────────────────────────────────────────────────────────────────
+//   let map, markersLayer, zonesLayer, hoverTooltip;
+//   let currentSource = "meteo";
+//   let currentDate = null;
+
+//   // ── Init ─────────────────────────────────────────────────────────────────
+//   function initMap() {
+//     const container = document.getElementById("biosense-map");
+//     if (!container || map) return;
+
+//     map = L.map("biosense-map", {
+//       center: [43.6047, 1.4442],
+//       zoom: 13,
+//       zoomControl: true,
+//       attributionControl: false
+//     });
+
+//     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+//       maxZoom: 19,
+//       subdomains: "abcd"
+//     }).addTo(map);
+
+//     L.control.attribution({ prefix: false, position: "bottomright" })
+//       .addAttribution('© <a href="https://carto.com/">CARTO</a> · © <a href="https://osm.org/">OSM</a>')
+//       .addTo(map);
+
+//     markersLayer = L.layerGroup().addTo(map);
+//     zonesLayer = L.layerGroup().addTo(map);
+
+//     // Hover tooltip (lightweight div)
+//     hoverTooltip = document.createElement("div");
+//     hoverTooltip.className = "tooltip";
+//     hoverTooltip.style.pointerEvents = "none";
+//     document.body.appendChild(hoverTooltip);
+
+//     // Detect current state from dashboard
+//     detectCurrentSource();
+//     detectCurrentDate();
+//     updateMap();
+
+//     // Listen to source buttons
+//     document.querySelectorAll(".src-btn").forEach(btn => {
+//       btn.addEventListener("click", () => {
+//         setTimeout(() => { detectCurrentSource(); updateMap(); }, 50);
+//       });
+//     });
+
+//     // Listen to day navigation buttons
+//     document.querySelectorAll(".day-btn").forEach(btn => {
+//       btn.addEventListener("click", () => {
+//         setTimeout(() => { detectCurrentDate(); updateMap(); }, 100);
+//       });
+//     });
+
+//     // Listen to date input
+//     const dateInput = document.getElementById("date-input");
+//     if (dateInput) {
+//       dateInput.addEventListener("change", () => {
+//         setTimeout(() => { detectCurrentDate(); updateMap(); }, 100);
+//       });
+//     }
+
+//     // Listen to calendar day clicks
+//     document.addEventListener("click", (e) => {
+//       if (e.target.classList.contains("cal-day") && !e.target.classList.contains("empty")) {
+//         setTimeout(() => { detectCurrentDate(); updateMap(); }, 150);
+//       }
+//     });
+
+//     // MutationObserver on #date-display
+//     const dateDisplay = document.getElementById("date-display");
+//     if (dateDisplay) {
+//       new MutationObserver(() => {
+//         detectCurrentDate();
+//         updateMap();
+//       }).observe(dateDisplay, { childList: true, characterData: true, subtree: true });
+//     }
+//   }
+
+//   // ── Detect current source from UI ────────────────────────────────────────
+//   function detectCurrentSource() {
+//     const activeBtn = document.querySelector(".src-btn.active");
+//     if (activeBtn) {
+//       const txt = activeBtn.textContent.toLowerCase();
+//       currentSource = txt.includes("neusta") ? "neusta" : "meteo";
+//     }
+//   }
+
+//   // ── Detect current date from UI ──────────────────────────────────────────
+//   function detectCurrentDate() {
+//     const el = document.getElementById("date-display");
+//     if (!el) return;
+//     const text = el.textContent.trim();
+//     // Try to extract YYYY-MM-DD from displayed text
+//     const match = text.match(/(\d{4}-\d{2}-\d{2})/);
+//     if (match) {
+//       currentDate = match[1];
+//       return;
+//     }
+//     // Try DD/MM/YYYY
+//     const match2 = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+//     if (match2) {
+//       currentDate = `${match2[3]}-${match2[2]}-${match2[1]}`;
+//       return;
+//     }
+//     // Try date input
+//     const dateInput = document.getElementById("date-input");
+//     if (dateInput && dateInput.value) {
+//       currentDate = dateInput.value;
+//     }
+//   }
+
+//   // ── Get day data from DASHBOARD_DATA ─────────────────────────────────────
+//   function getDayData(date, source) {
+//     const D = window.DASHBOARD_DATA;
+//     if (!D) return null;
+//     const days = source === "neusta" ? D.neusta_days : D.meteo_days;
+//     return days ? days[date] || null : null;
+//   }
+
+//   // ── Get all available dates for source ───────────────────────────────────
+//   function getAvailableDates(source) {
+//     const D = window.DASHBOARD_DATA;
+//     if (!D) return [];
+//     const days = source === "neusta" ? D.neusta_days : D.meteo_days;
+//     return days ? Object.keys(days).sort() : [];
+//   }
+
+//   // ── Update map ───────────────────────────────────────────────────────────
+//   function updateMap() {
+//     markersLayer.clearLayers();
+//     zonesLayer.clearLayers();
+
+//     const data = getDayData(currentDate, currentSource);
+//     const mapInfo = document.getElementById("map-data-info");
+
+//     if (!data) {
+//       if (mapInfo) {
+//         const dates = getAvailableDates(currentSource);
+//         if (dates.length > 0) {
+//           mapInfo.textContent = `Pas de données pour ${currentDate || "—"}. Données disponibles : ${dates[0]} → ${dates[dates.length-1]}`;
+//         } else {
+//           mapInfo.textContent = `Aucune donnée disponible pour la source ${currentSource}`;
+//         }
+//       }
+//       // Show stations as grey dots
+//       ALL_STATIONS.forEach(st => {
+//         const isActive = (currentSource === "meteo" && st.source === "meteo") ||
+//                          (currentSource === "neusta" && st.source === "neusta");
+//         if (!isActive) return;
+//         const marker = L.circleMarker([st.lat, st.lng], {
+//           radius: 8, fillColor: "#30363d", fillOpacity: 0.6,
+//           color: "#8b949e", weight: 1
+//         }).addTo(markersLayer);
+//         marker.bindTooltip(st.name + " — pas de données", {
+//           className: "leaflet-tooltip-dark", direction: "top", offset: [0, -10]
+//         });
+//       });
+//       return;
+//     }
+
+//     if (mapInfo) {
+//       mapInfo.textContent = `${data.source} — ${currentDate} — ${data.obs.length} observations`;
+//     }
+
+//     // ── Markers for stations with data ──────────────────────────────────
+//     const stations = ALL_STATIONS.filter(st => {
+//       if (currentSource === "meteo") return st.source === "meteo";
+//       if (currentSource === "neusta") return st.source === "neusta";
+//       return false;
+//     });
+
+//     stations.forEach(st => {
+//       const stats = data.stats;
+//       const cls = stats.max_cls;
+//       const color = COLORS[cls] || COLORS[0];
+//       const radius = 12 + cls * 3;
+
+//       // Main marker
+//       const marker = L.circleMarker([st.lat, st.lng], {
+//         radius: radius,
+//         fillColor: color,
+//         fillOpacity: 0.7,
+//         color: color,
+//         weight: 2,
+//         opacity: 0.9
+//       }).addTo(markersLayer);
+
+//       // Pulsing outer ring for high classes
+//       if (cls >= 3) {
+//         L.circleMarker([st.lat, st.lng], {
+//           radius: radius + 8,
+//           fillColor: "transparent",
+//           fillOpacity: 0,
+//           color: color,
+//           weight: 1.5,
+//           opacity: 0.3,
+//           dashArray: "4 4"
+//         }).addTo(markersLayer);
+//       }
+
+//       // ── HOVER → HX / Classe ──────────────────────────────────────────
+//       marker.on("mouseover", function (e) {
+//         hoverTooltip.innerHTML = `
+//           <strong>${st.name}</strong><br>
+//           Humidex max : <span style="color:${color};font-weight:700">${stats.max_hx}</span><br>
+//           Classe : <span class="popup-cls-pill" style="background:${color}">${cls}</span>
+//           ${NIVEAUX[cls]}
+//         `;
+//         hoverTooltip.style.display = "block";
+//         hoverTooltip.style.left = (e.originalEvent.clientX + 14) + "px";
+//         hoverTooltip.style.top = (e.originalEvent.clientY - 10) + "px";
+//       });
+//       marker.on("mousemove", function (e) {
+//         hoverTooltip.style.left = (e.originalEvent.clientX + 14) + "px";
+//         hoverTooltip.style.top = (e.originalEvent.clientY - 10) + "px";
+//       });
+//       marker.on("mouseout", function () {
+//         hoverTooltip.style.display = "none";
+//       });
+
+//       // ── CLICK → Détails complets ─────────────────────────────────────
+//       marker.on("click", function () {
+//         hoverTooltip.style.display = "none";
+
+//         let obsHTML = "";
+//         data.obs.forEach(o => {
+//           const oColor = COLORS[o.cls] || COLORS[0];
+//           obsHTML += `
+//             <tr>
+//               <td style="padding:3px 6px;font-size:11px;border-bottom:1px solid #30363d">${String(o.h).padStart(2,"0")}:00</td>
+//               <td style="padding:3px 6px;font-size:11px;border-bottom:1px solid #30363d">${o.T}°C</td>
+//               <td style="padding:3px 6px;font-size:11px;border-bottom:1px solid #30363d">${o.HR}%</td>
+//               <td style="padding:3px 6px;font-size:11px;border-bottom:1px solid #30363d;font-weight:700;color:${oColor}">${o.HX}</td>
+//               <td style="padding:3px 6px;font-size:11px;border-bottom:1px solid #30363d">
+//                 <span style="background:${oColor};color:#0d1117;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700">${o.cls}</span>
+//               </td>
+//             </tr>
+//           `;
+//         });
+
+//         const popupHTML = `
+//           <div style="max-width:340px">
+//             <div class="popup-title">${st.name}</div>
+//             <div class="popup-source">${st.description}</div>
+//             <div class="popup-source">${currentDate}</div>
+//             <hr style="border:none;border-top:1px solid #30363d;margin:6px 0">
+//             <div class="popup-row"><span class="popup-label">Humidex max</span><span class="popup-value" style="color:${color}">${stats.max_hx}</span></div>
+//             <div class="popup-row"><span class="popup-label">Classe max</span><span class="popup-value"><span class="popup-cls-pill" style="background:${color}">${cls}</span> ${NIVEAUX[cls]}</span></div>
+//             <div class="popup-row"><span class="popup-label">Température</span><span class="popup-value">${stats.min_T}°C → ${stats.max_T}°C</span></div>
+//             <div class="popup-row"><span class="popup-label">Humidité moy.</span><span class="popup-value">${stats.avg_HR}%</span></div>
+//             <div class="popup-row"><span class="popup-label">Observations</span><span class="popup-value">${data.obs.length}</span></div>
+//             <hr style="border:none;border-top:1px solid #30363d;margin:8px 0">
+//             <div style="font-size:10px;color:#8b949e;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Timeline horaire</div>
+//             <div style="max-height:200px;overflow-y:auto">
+//               <table style="width:100%;border-collapse:collapse">
+//                 <tr>
+//                   <th style="padding:3px 6px;font-size:9px;color:#8b949e;text-align:left;border-bottom:1px solid #30363d">Heure</th>
+//                   <th style="padding:3px 6px;font-size:9px;color:#8b949e;text-align:left;border-bottom:1px solid #30363d">T°C</th>
+//                   <th style="padding:3px 6px;font-size:9px;color:#8b949e;text-align:left;border-bottom:1px solid #30363d">HR%</th>
+//                   <th style="padding:3px 6px;font-size:9px;color:#8b949e;text-align:left;border-bottom:1px solid #30363d">HX</th>
+//                   <th style="padding:3px 6px;font-size:9px;color:#8b949e;text-align:left;border-bottom:1px solid #30363d">Cls</th>
+//                 </tr>
+//                 ${obsHTML}
+//               </table>
+//             </div>
+//           </div>
+//         `;
+
+//         marker.unbindPopup();
+//         marker.bindPopup(popupHTML, { maxWidth: 380, maxHeight: 420, className: "" }).openPopup();
+//       });
+//     });
+
+//     // ── Zones thermiques (couleur basée sur données réelles) ─────────────
+//     TOULOUSE_ZONES.forEach(zone => {
+//       const station = ALL_STATIONS.find(s => s.id === zone.stationId);
+//       if (!station) return;
+//       // Only show zones linked to current source
+//       if (currentSource === "meteo" && station.source !== "meteo") return;
+//       if (currentSource === "neusta" && station.source !== "neusta") return;
+
+//       const cls = data.stats.max_cls;
+//       const color = COLORS[cls] || COLORS[0];
+
+//       const polygon = L.polygon(zone.coords, {
+//         color: color,
+//         weight: 1.5,
+//         opacity: 0.6,
+//         fillColor: color,
+//         fillOpacity: 0.15,
+//         dashArray: "5 5"
+//       }).addTo(zonesLayer);
+
+//       polygon.bindTooltip(
+//         `<strong>${zone.name}</strong><br>Classe ${cls} — ${NIVEAUX[cls]}<br>HX max: ${data.stats.max_hx}`,
+//         { className: "leaflet-tooltip-dark", sticky: true }
+//       );
+//     });
+
+//     // Fit bounds
+//     const bounds = L.latLngBounds(stations.map(s => [s.lat, s.lng]));
+//     TOULOUSE_ZONES.forEach(z => {
+//       const station = ALL_STATIONS.find(s => s.id === z.stationId);
+//       if (station && station.source === currentSource) {
+//         z.coords.forEach(c => bounds.extend(c));
+//       }
+//     });
+//     if (bounds.isValid()) {
+//       map.fitBounds(bounds.pad(0.3));
+//     }
+
+//     // Update legend below map
+//     updateMapLegend(data);
+//   }
+
+//   // ── Map legend ───────────────────────────────────────────────────────────
+//   function updateMapLegend(data) {
+//     const legendEl = document.getElementById("map-legend-dynamic");
+//     if (!legendEl) return;
+
+//     if (!data) {
+//       legendEl.innerHTML = '<span style="color:#8b949e;font-size:11px">Sélectionnez un jour avec données</span>';
+//       return;
+//     }
+
+//     const nCls = data.stats.n_cls;
+//     let html = "";
+//     for (let i = 0; i < 8; i++) {
+//       const count = nCls[String(i)] || 0;
+//       if (count === 0) continue;
+//       html += `
+//         <div class="map-legend-item">
+//           <div class="map-legend-dot" style="background:${COLORS[i]}"></div>
+//           <span>C${i}: ${NIVEAUX[i]} (${count})</span>
+//         </div>
+//       `;
+//     }
+//     legendEl.innerHTML = html || '<span style="color:#8b949e">Aucune observation</span>';
+//   }
+
+//   // ── Leaflet dark tooltip style ───────────────────────────────────────────
+//   const style = document.createElement("style");
+//   style.textContent = `
+//     .leaflet-tooltip-dark {
+//       background: #161b22 !important;
+//       color: #e6edf3 !important;
+//       border: 1px solid #30363d !important;
+//       border-radius: 6px !important;
+//       padding: 6px 10px !important;
+//       font-size: 12px !important;
+//       box-shadow: 0 4px 12px rgba(0,0,0,.5) !important;
+//     }
+//     .leaflet-tooltip-dark::before {
+//       border-top-color: #161b22 !important;
+//     }
+//   `;
+//   document.head.appendChild(style);
+
+//   // ── Boot ─────────────────────────────────────────────────────────────────
+//   if (document.readyState === "loading") {
+//     document.addEventListener("DOMContentLoaded", initMap);
+//   } else {
+//     initMap();
+//   }
+
+// })();}
+
+// Expose for onclick
+window.setSource   = setSource;
+window.jumpToClass = jumpToClass;
+</script>
+
+</body>
+</html>
