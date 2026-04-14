@@ -283,27 +283,6 @@
     .tab-btn:hover { color: var(--text); }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* ── Timeline ────────────────────────────────────────────── */
-    .timeline-section {
-      padding: 18px 28px 24px; border-top: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .timeline-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
-    }
-    .timeline-modes {
-      display: flex; gap: 6px;
-    }
-    .tl-btn {
-      padding: 4px 14px; border-radius: 14px; border: 1px solid var(--border);
-      background: transparent; color: var(--muted); cursor: pointer;
-      font-size: 11px; font-weight: 600; transition: all .2s;
-    }
-    .tl-btn.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
-    .tl-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
-    #timeline-chart { width: 100% !important; height: 180px !important; }
-
     /* ── Carte & Deplacement page ─────────────────────────────── */
     #page-carte { width: 100%; }
     .carte-layout {
@@ -740,7 +719,155 @@
       line-height: 1;
       align-self: center;
     }
- 
+
+    /* ── Diagnostic Local : bouton flottant ────────────────────────── */
+    #diag-toggle-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 2000;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      box-shadow: 0 4px 24px rgba(0,0,0,.5);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #diag-toggle-btn:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 24px rgba(88,166,255,.25);
+    }
+    #diag-toggle-btn .diag-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--c0);
+      box-shadow: 0 0 8px var(--c0);
+      transition: background .3s, box-shadow .3s;
+    }
+    #diag-toggle-btn.alert .diag-dot {
+      animation: diag-pulse 0.9s ease-in-out infinite;
+    }
+    @keyframes diag-pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(1.4); }
+    }
+
+    /* ── Diagnostic Local : panneau ────────────────────────────────── */
+    #diag-panel {
+      position: fixed;
+      bottom: 82px;
+      right: 28px;
+      z-index: 1999;
+      width: 340px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.6);
+      display: none;
+    }
+    #diag-panel.open { display: block; }
+
+    .diag-title {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .8px;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .diag-title::after { content:""; flex:1; height:1px; background:var(--border); }
+
+    .diag-inputs { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+
+    .diag-field label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--muted); margin-bottom: 6px;
+    }
+    .diag-field label span {
+      font-size: 15px; font-weight: 700; color: var(--text);
+    }
+    .diag-field input[type=range] {
+      width: 100%; accent-color: var(--accent);
+      height: 4px; cursor: pointer;
+    }
+
+    .diag-hx-bar {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .diag-hx-label { font-size: 11px; color: var(--muted); }
+    .diag-hx-val   { font-size: 26px; font-weight: 800; color: var(--accent); }
+
+    .diag-class-badge {
+      width: 100%;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+      transition: background .3s, border-color .3s;
+      border: 1px solid transparent;
+    }
+    .diag-cls-num  { font-size: 32px; font-weight: 900; line-height: 1; }
+    .diag-cls-info { flex: 1; }
+    .diag-cls-name { font-size: 14px; font-weight: 700; }
+    .diag-cls-seuil{ font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .diag-signal {
+      display: none;
+      background: #1a0a0a;
+      border: 1px solid #ef4444;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #f87171;
+      margin-bottom: 14px;
+      animation: signal-flash 1.2s ease-in-out infinite;
+    }
+    .diag-signal.show { display: flex; gap: 10px; align-items: flex-start; }
+    @keyframes signal-flash {
+      0%,100% { border-color: #ef4444; }
+      50%      { border-color: #991b1b; }
+    }
+    .diag-signal-icon { font-size: 18px; flex-shrink: 0; }
+
+    .diag-rec {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 11px;
+      color: var(--muted);
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .diag-rec-conseil {
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+    .diag-rec ul { list-style: none; padding: 0; }
+    .diag-rec ul li {
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.4;
+    }
+    .diag-rec ul li:last-child { border-bottom: none; }
+
   </style>
 </head>
 <body>
@@ -818,18 +945,7 @@
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip"></div>
 
-<!-- ── Timeline ─────────────────────────────────────────────────────────────── -->
-<div class="timeline-section">
-  <div class="timeline-header">
-    <div class="panel-title" style="margin-bottom:0">&#201;volution temporelle &mdash; Donn&#233;es journali&#232;res</div>
-    <div class="timeline-modes">
-      <button class="tl-btn active" id="tl-cls" onclick="setTimelineMode('cls')">Classe</button>
-      <button class="tl-btn" id="tl-hx" onclick="setTimelineMode('hx')">Humidex</button>
-      <button class="tl-btn" id="tl-T" onclick="setTimelineMode('T')">Temp&#233;rature</button>
-    </div>
-  </div>
-  <canvas id="timeline-chart"></canvas>
-</div>
+
 
 </div><!-- end page-analyse -->
 
@@ -888,6 +1004,61 @@
 
   </div>
 </div>
+
+<!-- ── Diagnostic Local : panneau flottant ───────────────────────────────── -->
+<div id="diag-panel">
+
+  <div class="diag-title">Diagnostic local</div>
+
+  <div class="diag-inputs">
+    <div class="diag-field">
+      <label>
+        Température (°C)
+        <span id="diag-t-val">25</span>
+      </label>
+      <input type="range" id="diag-t" min="-10" max="50" step="0.5" value="25"
+             oninput="updateDiagnostic()">
+    </div>
+    <div class="diag-field">
+      <label>
+        Humidité relative (%)
+        <span id="diag-hr-val">50</span>
+      </label>
+      <input type="range" id="diag-hr" min="0" max="100" step="1" value="50"
+             oninput="updateDiagnostic()">
+    </div>
+  </div>
+
+  <div class="diag-hx-bar">
+    <div>
+      <div class="diag-hx-label">Humidex calculé</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">Masterton &amp; Richardson 1979</div>
+    </div>
+    <div class="diag-hx-val" id="diag-hx-val">--</div>
+  </div>
+
+  <div class="diag-class-badge" id="diag-badge">
+    <div class="diag-cls-num" id="diag-cls-num">--</div>
+    <div class="diag-cls-info">
+      <div class="diag-cls-name" id="diag-cls-name">--</div>
+      <div class="diag-cls-seuil" id="diag-cls-seuil">--</div>
+    </div>
+  </div>
+
+  <div class="diag-signal" id="diag-signal">
+    <div class="diag-signal-icon">&#9888;</div>
+    <div id="diag-signal-text"></div>
+  </div>
+
+  <div class="diag-rec" id="diag-rec"></div>
+
+</div>
+
+<!-- Bouton flottant -->
+<button id="diag-toggle-btn" onclick="toggleDiagnostic()">
+  <div class="diag-dot" id="diag-dot"></div>
+  Diagnostic local
+</button>
 
 <!-- Footer -->
 <footer>
@@ -999,8 +1170,6 @@ let selectedDate  = null;
 let timelineChart = null;
 let donutChart    = null;
 let activeRow     = null;
-let histChart     = null;
-let histMode      = "cls";
 let leafletMap    = null;
 let mapMarkerLayers = [];
 let mapInitialized  = false;
@@ -1058,7 +1227,6 @@ function initUI() {
   calYear = parseInt(startDate.slice(0, 4));
   buildCalendar();
   showDay(startDate);
-  buildTimeline();
 }
 
 // ── Legend ────────────────────────────────────────────────────────────────────
@@ -1161,7 +1329,6 @@ function setSource(src) {
     buildCalendar();
     showDay(newDate);
   }
-  buildTimeline();
 }
 
 // ── Day navigation ────────────────────────────────────────────────────────────
@@ -1464,128 +1631,6 @@ function buildDonutChart(s) {
   });
 }
 
-// ── Timeline chart ────────────────────────────────────────────────────────────
-window.setTimelineMode = setTimelineMode;
-
-function setTimelineMode(mode) {
-  histMode = mode;
-  ["cls", "hx", "T"].forEach(m => {
-    const btn = document.getElementById("tl-" + m);
-    if (btn) btn.classList.toggle("active", m === mode);
-  });
-  buildTimeline();
-}
-
-function buildTimeline() {
-  const cal = source === "meteo" ? DATA.calendar_meteo : DATA.calendar_neusta;
-  if (!cal || cal.length === 0) return;
-
-  const sorted = [...cal].sort((a, b) => a.date.localeCompare(b.date));
-  const labels = sorted.map(d => d.date);
-
-  let values, label, unit;
-  if (histMode === "cls") {
-    values = sorted.map(d => d.max_cls);
-    label  = "Classe thermique max";
-    unit   = "";
-  } else if (histMode === "hx") {
-    values = sorted.map(d => d.max_hx);
-    label  = "Humidex max";
-    unit   = " HX";
-  } else {
-    values = sorted.map(d => {
-      const day = (source === "meteo" ? DATA.meteo_days : DATA.neusta_days)[d.date];
-      return day ? day.stats.max_T : null;
-    });
-    label  = "Temp\u00e9rature max (\u00b0C)";
-    unit   = " \u00b0C";
-  }
-
-  const bgColors = sorted.map(d => {
-    const cls = d.max_cls;
-    return ALARME[cls] ? ALARME[cls].color + "cc" : "#8b949e88";
-  });
-
-  const ctx = document.getElementById("timeline-chart");
-  if (!ctx) return;
-
-  if (histChart) { histChart.destroy(); histChart = null; }
-
-  histChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label,
-        data: values,
-        backgroundColor: bgColors,
-        borderWidth: 0,
-        borderRadius: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: (items) => {
-              const d = items[0].label;
-              return new Date(d).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric", month:"short", year:"numeric" });
-            },
-            label: (item) => {
-              const d = sorted[item.dataIndex];
-              const cls = d.max_cls;
-              const niveau = ALARME[cls] ? ALARME[cls].niveau : "";
-              return [
-                " " + label + " : " + (item.raw !== null ? item.raw + unit : "\u2014"),
-                " Classe " + cls + " \u2014 " + niveau,
-                " HX max : " + d.max_hx + " HX"
-              ];
-            }
-          },
-          backgroundColor: "#0d1117",
-          borderColor: "#30363d",
-          borderWidth: 1,
-          titleColor: "#e6edf3",
-          bodyColor: "#8b949e",
-          padding: 10
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: "#8b949e",
-            font: { size: 9 },
-            maxTicksLimit: 24,
-            maxRotation: 0,
-            callback: (val, idx) => {
-              const date = labels[idx];
-              if (!date) return "";
-              const d = new Date(date);
-              return d.getDate() === 1 ? d.toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }) : "";
-            }
-          },
-          grid: { color: "#21262d" }
-        },
-        y: {
-          grid: { color: "#21262d" },
-          ticks: { color: "#8b949e", font: { size: 10 } },
-          min: histMode === "cls" ? 0 : undefined,
-          max: histMode === "cls" ? 7 : undefined,
-        }
-      },
-      onClick: (_e, elements) => {
-        if (elements.length > 0) {
-          const date = labels[elements[0].index];
-          if (date) { calYear = parseInt(date.slice(0,4)); buildCalendar(); showDay(date); }
-        }
-      }
-    }
-  });
-}
 
 // ── Render Recommendations ────────────────────────────────────────────────────
 function renderRec(cls) {
@@ -2192,6 +2237,103 @@ function getCrossSteps(dep, arr, delta, riskLevel) {
 
   return steps;
 }
+
+// ── Diagnostic Local ──────────────────────────────────────────────────────────
+
+function toggleDiagnostic() {
+  const panel = document.getElementById("diag-panel");
+  const isOpen = panel.classList.toggle("open");
+  if (isOpen) updateDiagnostic();
+}
+
+function calcHumidex(T, HR) {
+  const e = 6.112 * Math.pow(10, (7.5 * T) / (237.7 + T)) * (HR / 100);
+  return T + (5 / 9) * (e - 10);
+}
+
+function calcClass(hx) {
+  const seuils = [25, 30, 34, 38, 40, 43, 45];
+  for (let i = 0; i < seuils.length; i++) {
+    if (hx < seuils[i]) return i;
+  }
+  return 7;
+}
+
+function updateDiagnostic() {
+  const T  = parseFloat(document.getElementById("diag-t").value);
+  const HR = parseFloat(document.getElementById("diag-hr").value);
+
+  document.getElementById("diag-t-val").textContent  = T + " °C";
+  document.getElementById("diag-hr-val").textContent = HR + " %";
+
+  const hx  = calcHumidex(T, HR);
+  const cls = calcClass(hx);
+  const a   = ALARME[cls];
+
+  // Humidex
+  document.getElementById("diag-hx-val").textContent = hx.toFixed(1);
+
+  // Badge classe
+  const badge = document.getElementById("diag-badge");
+  badge.style.background   = a.color + "18";
+  badge.style.borderColor  = a.color + "55";
+  document.getElementById("diag-cls-num").textContent   = cls;
+  document.getElementById("diag-cls-num").style.color   = a.color;
+  document.getElementById("diag-cls-name").textContent  = a.niveau;
+  document.getElementById("diag-cls-name").style.color  = a.color;
+  document.getElementById("diag-cls-seuil").textContent = a.seuil;
+
+  // Bouton flottant : couleur du dot + alerte
+  const dot = document.getElementById("diag-dot");
+  dot.style.background  = a.color;
+  dot.style.boxShadow   = "0 0 8px " + a.color;
+  const btn = document.getElementById("diag-toggle-btn");
+  btn.classList.toggle("alert", cls >= 3);
+
+  // Signal d'alerte
+  const signal     = document.getElementById("diag-signal");
+  const signalText = document.getElementById("diag-signal-text");
+  if (cls >= 3) {
+    signal.classList.add("show");
+    if (cls >= 6) {
+      signal.style.borderColor = "#991b1b";
+      signal.style.background  = "#1a0000";
+      signal.style.color       = "#f87171";
+      signalText.innerHTML = "<strong>SIGNAL CRITIQUE</strong> — Risque vital. Arrêt immédiat de toute activité physique. Contacter le SAMU (15) au moindre symptôme.";
+    } else if (cls >= 5) {
+      signal.style.borderColor = "#ef4444";
+      signal.style.background  = "#1a0505";
+      signal.style.color       = "#f87171";
+      signalText.innerHTML = "<strong>SIGNAL ÉLEVÉ</strong> — Inconfort intense. Arrêt des efforts non essentiels. Rafraîchissement actif requis.";
+    } else if (cls >= 4) {
+      signal.style.borderColor = "#f97316";
+      signal.style.background  = "#1a0c00";
+      signal.style.color       = "#fb923c";
+      signalText.innerHTML = "<strong>SIGNAL ALERTE</strong> — Stress thermique élevé. Cycle 45 min travail / 15 min repos. Binôme obligatoire.";
+    } else {
+      signal.style.borderColor = "#facc15";
+      signal.style.background  = "#1a1600";
+      signal.style.color       = "#facc15";
+      signalText.innerHTML = "<strong>SIGNAL VIGILANCE</strong> — Inconfort évident. Réduire les efforts intenses. Hydratation renforcée.";
+    }
+  } else {
+    signal.classList.remove("show");
+  }
+
+  // Recommandations
+  const rec = document.getElementById("diag-rec");
+  let html = "<div class='diag-rec-conseil'>" + a.conseil + "</div>";
+  html += "<ul>";
+  a.protocole.forEach(p => { html += "<li>" + p + "</li>"; });
+  html += "</ul>";
+  if (cls >= 4 && a.legal) {
+    html += "<div style='margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:#f87171'>" + a.legal + "</div>";
+  }
+  rec.innerHTML = html;
+}
+
+window.toggleDiagnostic = toggleDiagnostic;
+window.updateDiagnostic = updateDiagnostic;
 </script>
 </body>
 </html>
