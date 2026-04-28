@@ -5,6 +5,10 @@
 
 ---
 
+## Preview
+
+![Dashboard Preview](./moc.png)
+
 ## Overview
 
 **BioSense360** is an interactive thermal monitoring dashboard designed to assess heat-related risks in the workplace. It combines outdoor weather data (Météo France — Toulouse-Blagnac station) with indoor sensor data (Neusta ClimaTrack MKII) to produce hourly Humidex classifications and safety recommendations aligned with current regulatory standards.
