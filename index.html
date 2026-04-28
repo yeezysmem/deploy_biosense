@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BioSense360 — Dashboard de Vivabilité Thermique</title>
+  <title>BioSense360 — Thermal Comfort Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -283,7 +283,28 @@
     .tab-btn:hover { color: var(--text); }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* ── Carte & Deplacement page ─────────────────────────────── */
+    /* ── Timeline ────────────────────────────────────────────── */
+    .timeline-section {
+      padding: 18px 28px 24px; border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .timeline-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+    }
+    .timeline-modes {
+      display: flex; gap: 6px;
+    }
+    .tl-btn {
+      padding: 4px 14px; border-radius: 14px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 11px; font-weight: 600; transition: all .2s;
+    }
+    .tl-btn.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+    .tl-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+    #timeline-chart { width: 100% !important; height: 180px !important; }
+
+    /* ── Map & Mobility page ─────────────────────────────── */
     #page-carte { width: 100%; }
     .carte-layout {
       display: grid;
@@ -291,7 +312,6 @@
       gap: 18px;
       padding: 18px 22px 22px;
       align-items: stretch;
-      
     }
 
     .map-section {
@@ -350,7 +370,6 @@
       display: flex;
       flex-direction: column;
       height: 70vh;
-      
       max-height: 760px;
       overflow: hidden;
     }
@@ -361,7 +380,7 @@
       align-items: end;
       margin-bottom: 18px;
     }
-    
+
     .zone-select label {
       display: block;
       font-size: 10px;
@@ -501,7 +520,7 @@
       font-weight: 800;
     }
 
-    /* Accli timeline */
+    /* Acclimatization timeline */
     .accli-bar {
       display: flex;
       align-items: center;
@@ -573,8 +592,6 @@
       font-size: 12px;
       line-height: 1.45;
   }
-
-      
 
     .bs-marker-stem {
       width: 2px;
@@ -719,181 +736,31 @@
       line-height: 1;
       align-self: center;
     }
-
-    /* ── Diagnostic Local : bouton flottant ────────────────────────── */
-    #diag-toggle-btn {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      z-index: 2000;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      box-shadow: 0 4px 24px rgba(0,0,0,.5);
-      transition: border-color .2s, box-shadow .2s;
-    }
-    #diag-toggle-btn:hover {
-      border-color: var(--accent);
-      box-shadow: 0 4px 24px rgba(88,166,255,.25);
-    }
-    #diag-toggle-btn .diag-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--c0);
-      box-shadow: 0 0 8px var(--c0);
-      transition: background .3s, box-shadow .3s;
-    }
-    #diag-toggle-btn.alert .diag-dot {
-      animation: diag-pulse 0.9s ease-in-out infinite;
-    }
-    @keyframes diag-pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:.4; transform:scale(1.4); }
-    }
-
-    /* ── Diagnostic Local : panneau ────────────────────────────────── */
-    #diag-panel {
-      position: fixed;
-      bottom: 82px;
-      right: 28px;
-      z-index: 1999;
-      width: 340px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 8px 40px rgba(0,0,0,.6);
-      display: none;
-    }
-    #diag-panel.open { display: block; }
-
-    .diag-title {
-      font-size: 11px; font-weight: 700; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .8px;
-      margin-bottom: 16px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .diag-title::after { content:""; flex:1; height:1px; background:var(--border); }
-
-    .diag-inputs { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
-
-    .diag-field label {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 12px; color: var(--muted); margin-bottom: 6px;
-    }
-    .diag-field label span {
-      font-size: 15px; font-weight: 700; color: var(--text);
-    }
-    .diag-field input[type=range] {
-      width: 100%; accent-color: var(--accent);
-      height: 4px; cursor: pointer;
-    }
-
-    .diag-hx-bar {
-      background: #0d1117;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .diag-hx-label { font-size: 11px; color: var(--muted); }
-    .diag-hx-val   { font-size: 26px; font-weight: 800; color: var(--accent); }
-
-    .diag-class-badge {
-      width: 100%;
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 14px;
-      transition: background .3s, border-color .3s;
-      border: 1px solid transparent;
-    }
-    .diag-cls-num  { font-size: 32px; font-weight: 900; line-height: 1; }
-    .diag-cls-info { flex: 1; }
-    .diag-cls-name { font-size: 14px; font-weight: 700; }
-    .diag-cls-seuil{ font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-    .diag-signal {
-      display: none;
-      background: #1a0a0a;
-      border: 1px solid #ef4444;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 12px;
-      line-height: 1.5;
-      color: #f87171;
-      margin-bottom: 14px;
-      animation: signal-flash 1.2s ease-in-out infinite;
-    }
-    .diag-signal.show { display: flex; gap: 10px; align-items: flex-start; }
-    @keyframes signal-flash {
-      0%,100% { border-color: #ef4444; }
-      50%      { border-color: #991b1b; }
-    }
-    .diag-signal-icon { font-size: 18px; flex-shrink: 0; }
-
-    .diag-rec {
-      background: #0d1117;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 11px;
-      color: var(--muted);
-      max-height: 220px;
-      overflow-y: auto;
-    }
-    .diag-rec-conseil {
-      font-size: 12px;
-      color: var(--text);
-      margin-bottom: 8px;
-      font-style: italic;
-    }
-    .diag-rec ul { list-style: none; padding: 0; }
-    .diag-rec ul li {
-      padding: 5px 0;
-      border-bottom: 1px solid var(--border);
-      line-height: 1.4;
-    }
-    .diag-rec ul li:last-child { border-bottom: none; }
-
   </style>
 </head>
 <body>
-
 <!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
     <div>
       <div class="logo-title">BioSense360</div>
-      <div class="logo-sub">Surveillance de Vivabilité Thermique — TER M1 IA, Université de Toulouse &bull; Client : Neusta</div>
+      <div class="logo-sub">Thermal Comfort Monitoring — TER M1 AI, University of Toulouse • Client: Neusta</div>
     </div>
   </div>
   <div class="header-meta">
-    Modèle : <strong>RandomForest — 500 arbres — Entropie</strong><br/>
-    Précision test : <strong>99,98 %</strong> &nbsp;&bull;&nbsp; Validation Neusta : <strong>99,05 %</strong>
+    Model: <strong>Random Forest — 500 trees — Entropy</strong><br/>
+    Test Accuracy: <strong>99.98%</strong> &nbsp;•&nbsp; Neusta Validation: <strong>99.05%</strong>
   </div>
 </header>
 
 <!-- ── Tab Navigation ──────────────────────────────────────────────────────── -->
 <div class="tab-nav">
-  <button class="tab-btn active" id="tab-analyse" onclick="switchTab('analyse')">Analyse journali&#232;re</button>
-  <button class="tab-btn" id="tab-carte" onclick="switchTab('carte')">Carte &amp; D&#233;placement</button>
+  <button class="tab-btn active" id="tab-analyse" onclick="switchTab('analyse')">Daily Analysis</button>
+  <button class="tab-btn" id="tab-carte" onclick="switchTab('carte')">Map & Mobility</button>
 </div>
 
-<!-- ── Page Analyse ─────────────────────────────────────────────────────────── -->
+<!-- ── Analysis Page ─────────────────────────────────────────────────────────── -->
 <div id="page-analyse">
 
 <!-- ── Source Toggle ──────────────────────────────────────────────────────── -->
@@ -901,13 +768,13 @@
   <span class="source-label">Source</span>
   <div class="source-btns">
     <button class="src-btn active" id="btn-meteo" onclick="setSource('meteo')">
-      Météo France — Toulouse-Blagnac (extérieur)
+      Météo France — Toulouse-Blagnac (outdoor)
     </button>
     <button class="src-btn" id="btn-neusta" onclick="setSource('neusta')">
-      Neusta ClimaTrack MKII (intérieur)
+      Neusta ClimaTrack MKII (indoor)
     </button>
   </div>
-  <span class="src-info" id="src-info">Chargement…</span>
+  <span class="src-info" id="src-info">Loading…</span>
 </div>
 
 <!-- ── Layout ──────────────────────────────────────────────────────────────── -->
@@ -915,7 +782,7 @@
 
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="panel-title">Calendrier thermique</div>
+    <div class="panel-title">Thermal Calendar</div>
     <div class="cal-nav">
       <button class="nav-btn" id="btn-prev-year">&#8249;</button>
       <span class="cal-year" id="cal-year-label">2024</span>
@@ -923,7 +790,7 @@
     </div>
     <div id="cal-grid"></div>
     <div style="margin-top:18px">
-      <div class="panel-title">Echelle Humidex</div>
+      <div class="panel-title">Humidex Scale</div>
       <div id="legend-rows"></div>
     </div>
   </aside>
@@ -931,13 +798,13 @@
   <!-- Main -->
   <main class="main">
     <div class="day-nav">
-      <button class="day-btn" id="btn-prev-day">&#8592; Precedent</button>
+      <button class="day-btn" id="btn-prev-day">&#8592; Previous</button>
       <div id="date-display">—</div>
       <input type="date" id="date-input" />
-      <button class="day-btn" id="btn-next-day">Suivant &#8594;</button>
+      <button class="day-btn" id="btn-next-day">Next &#8594;</button>
     </div>
     <div id="day-content">
-      <div class="no-data-msg">Chargement des donnees…</div>
+      <div class="no-data-msg">Loading data…</div>
     </div>
   </main>
 </div>
@@ -945,21 +812,32 @@
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip"></div>
 
-
+<!-- ── Timeline ─────────────────────────────────────────────────────────────── -->
+<div class="timeline-section">
+  <div class="timeline-header">
+    <div class="panel-title" style="margin-bottom:0">Time Evolution — Daily Data</div>
+    <div class="timeline-modes">
+      <button class="tl-btn active" id="tl-cls" onclick="setTimelineMode('cls')">Class</button>
+      <button class="tl-btn" id="tl-hx" onclick="setTimelineMode('hx')">Humidex</button>
+      <button class="tl-btn" id="tl-T" onclick="setTimelineMode('T')">Temperature</button>
+    </div>
+  </div>
+  <canvas id="timeline-chart"></canvas>
+</div>
 
 </div><!-- end page-analyse -->
 
-<!-- ── Page Carte & Deplacement ─────────────────────────────────────────────── -->
+<!-- ── Map & Mobility Page ─────────────────────────────────────────────── -->
 <div id="page-carte" style="display:none">
   <div class="carte-layout">
 
     <!-- Map -->
     <div class="map-section">
-      <div class="panel-title">Carte thermique &mdash; Stations M&eacute;t&eacute;o France</div>
+      <div class="panel-title">Thermal Map — Météo France Stations</div>
       <div id="map-container"></div>
       <div class="map-legend" id="map-legend"></div>
       <div class="map-date-bar">
-        <span class="map-date-label">Date :</span>
+        <span class="map-date-label">Date:</span>
         <input type="date" id="map-date-input" />
         <span id="map-date-cls-info"></span>
       </div>
@@ -969,34 +847,34 @@
     <div class="rec-engine">
      <div class="rec-engine-scroll">
 
-       <div class="panel-title">Moteur de recommandation &mdash; D&eacute;placement thermique</div>
+       <div class="panel-title">Recommendation Engine — Thermal Mobility</div>
 
       <div class="zone-selectors">
         <div class="zone-select">
-          <label>Zone de d&eacute;part</label>
+          <label>Departure Zone</label>
           <select id="dep-station" onchange="computeCross()"></select>
         </div>
         <div class="zone-arrow">&#8594;</div>
         <div class="zone-select">
-          <label>Zone d&apos;arriv&eacute;e</label>
+          <label>Arrival Zone</label>
           <select id="arr-station" onchange="computeCross()"></select>
         </div>
       </div>
 
       <!-- Mini matrix -->
       <div class="cross-matrix-wrap">
-        <div class="panel-title">Matrice de risque (d&eacute;part &#215; arriv&eacute;e)</div>
+        <div class="panel-title">Risk Matrix (departure × arrival)</div>
         <div id="cross-matrix"></div>
         <div style="display:flex;gap:16px;margin-top:6px;font-size:10px;color:var(--muted)">
-          <span>&#8592; axe d&eacute;part (ligne)</span>
-          <span style="margin-left:auto">axe arriv&eacute;e (colonne) &#8594;</span>
+          <span>&#8592; departure axis (rows)</span>
+          <span style="margin-left:auto">arrival axis (columns) &#8594;</span>
         </div>
       </div>
 
       <!-- Output -->
       <div id="cross-output">
         <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">
-          S&eacute;lectionnez une zone de d&eacute;part et d&apos;arriv&eacute;e
+          Select a departure and arrival zone
         </div>
       </div>
      </div>
@@ -1005,66 +883,11 @@
   </div>
 </div>
 
-<!-- ── Diagnostic Local : panneau flottant ───────────────────────────────── -->
-<div id="diag-panel">
-
-  <div class="diag-title">Diagnostic local</div>
-
-  <div class="diag-inputs">
-    <div class="diag-field">
-      <label>
-        Température (°C)
-        <span id="diag-t-val">25</span>
-      </label>
-      <input type="range" id="diag-t" min="-10" max="50" step="0.5" value="25"
-             oninput="updateDiagnostic()">
-    </div>
-    <div class="diag-field">
-      <label>
-        Humidité relative (%)
-        <span id="diag-hr-val">50</span>
-      </label>
-      <input type="range" id="diag-hr" min="0" max="100" step="1" value="50"
-             oninput="updateDiagnostic()">
-    </div>
-  </div>
-
-  <div class="diag-hx-bar">
-    <div>
-      <div class="diag-hx-label">Humidex calculé</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">Masterton &amp; Richardson 1979</div>
-    </div>
-    <div class="diag-hx-val" id="diag-hx-val">--</div>
-  </div>
-
-  <div class="diag-class-badge" id="diag-badge">
-    <div class="diag-cls-num" id="diag-cls-num">--</div>
-    <div class="diag-cls-info">
-      <div class="diag-cls-name" id="diag-cls-name">--</div>
-      <div class="diag-cls-seuil" id="diag-cls-seuil">--</div>
-    </div>
-  </div>
-
-  <div class="diag-signal" id="diag-signal">
-    <div class="diag-signal-icon">&#9888;</div>
-    <div id="diag-signal-text"></div>
-  </div>
-
-  <div class="diag-rec" id="diag-rec"></div>
-
-</div>
-
-<!-- Bouton flottant -->
-<button id="diag-toggle-btn" onclick="toggleDiagnostic()">
-  <div class="diag-dot" id="diag-dot"></div>
-  Diagnostic local
-</button>
-
 <!-- Footer -->
 <footer>
-  <span>Seuils : <strong>OHCOW 2022</strong> &bull; <strong>ACGIH TLV 2023</strong> &bull; <strong>NIOSH 2016</strong></span>
-  <span>Protocoles : <strong>HAS 2023</strong> &bull; <strong>INRS R-447</strong> &bull; <strong>Decret n 2025-482</strong></span>
-  <span>Humidex : <strong>Masterton &amp; Richardson 1979</strong> — e = 6.112 x 10^(7.5T/(237.7+T)) x HR/100</span>
+  <span>Thresholds: <strong>OHCOW 2022</strong> • <strong>ACGIH TLV 2023</strong> • <strong>NIOSH 2016</strong></span>
+  <span>Protocols: <strong>HAS 2023</strong> • <strong>INRS R-447</strong> • <strong>Decree No. 2025-482</strong></span>
+  <span>Humidex: <strong>Masterton & Richardson 1979</strong> — e = 6.112 × 10^(7.5T/(237.7+T)) × RH/100</span>
   <span style="margin-left:auto">BioSense360 v3.0</span>
 </footer>
 
@@ -1072,95 +895,94 @@
 <script>
 "use strict";
 
-// ── Systeme d'alarme (SYSTEME_ALARME from production/biosense360/config.py) ──
 const ALARME = {
   0: {
-    seuil: "HX < 25", niveau: "Conditions Normales", color: "#22c55e",
-    conseil: "Conditions ideales. Aucune restriction thermique.",
+    seuil: "HX < 25", niveau: "Normal Conditions", color: "#22c55e",
+    conseil: "Ideal conditions. No thermal restriction.",
     protocole: [
-      "Aucune mesure de protection thermique requise.",
-      "Hydratation habituelle (~1,5 L/jour — OMS).",
+      "No thermal protection measures required.",
+      "Normal hydration (~1.5 L/day — WHO).",
     ],
     legal: null
   },
   1: {
-    seuil: "25 \u2264 HX < 30", niveau: "Gene legere", color: "#a3e635",
-    conseil: "Hydratez-vous normalement lors d'efforts.",
+    seuil: "25 ≤ HX < 30", niveau: "Mild Discomfort", color: "#a3e635",
+    conseil: "Hydrate normally during physical effort.",
     protocole: [
-      "200 mL d'eau fraiche toutes les 30 min d'effort.",
-      "Vetements legers, clairs et respirants.",
+      "200 mL of cool water every 30 min of effort.",
+      "Light, bright and breathable clothing.",
     ],
     legal: null
   },
   2: {
-    seuil: "30 \u2264 HX < 34", niveau: "Vigilance", color: "#facc15",
-    conseil: "Buvez regulierement. Reduisez les efforts au soleil.",
+    seuil: "30 ≤ HX < 34", niveau: "Caution", color: "#facc15",
+    conseil: "Drink regularly. Reduce physical effort in the sun.",
     protocole: [
-      "Surveillance horaire de la temperature et de l'humidite relative.",
-      "250 mL d'eau fraiche toutes les 20 min (NIOSH ~ 0,75 L/h).",
-      "Reduire les efforts intenses entre 12h et 16h.",
+      "Hourly monitoring of temperature and relative humidity.",
+      "250 mL of cool water every 20 min (NIOSH ~ 0.75 L/h).",
+      "Reduce intense physical effort between 12 p.m. and 4 p.m.",
     ],
     legal: null
   },
   3: {
-    seuil: "34 \u2264 HX < 38", niveau: "Inconfort evident", color: "#fb923c",
-    conseil: "Hydratation active obligatoire. Privilegiez l'ombre.",
+    seuil: "34 ≤ HX < 38", niveau: "Noticeable Discomfort", color: "#fb923c",
+    conseil: "Active hydration required. Prefer shaded areas.",
     protocole: [
-      "250 mL d'eau fraiche toutes les 20 min (NIOSH/OSHA — effort modere).",
-      "Pause a l'ombre : 10 min minimum par heure.",
-      "Reporter les travaux lourds avant 10h ou apres 18h (INRS R-447).",
+      "250 mL of cool water every 20 min (NIOSH/OSHA — moderate effort).",
+      "Shade break: at least 10 min per hour.",
+      "Reschedule heavy work before 10 a.m. or after 6 p.m. (INRS R-447).",
     ],
     legal: null
   },
   4: {
-    seuil: "38 \u2264 HX < 40", niveau: "Alerte", color: "#f87171",
-    conseil: "15 min de repos par heure. Travaux lourds suspendus.",
+    seuil: "38 ≤ HX < 40", niveau: "Alert", color: "#f87171",
+    conseil: "15 min of rest per hour. Heavy work suspended.",
     protocole: [
-      "Cycle obligatoire : 45 min travail / 15 min repos (ACGIH TLV 2023).",
-      "240 mL d'eau fraiche toutes les 20 min.",
-      "Systeme de binome obligatoire — aucun travailleur isole.",
-      "Kit premiers secours chaleur accessible sur site.",
+      "Mandatory cycle: 45 min work / 15 min rest (ACGIH TLV 2023).",
+      "240 mL of cool water every 20 min.",
+      "Mandatory buddy system — no isolated worker.",
+      "Heat first-aid kit available on site.",
     ],
-    legal: "Decret n\u00b0 2025-482 : evaluation DUERP chaleur obligatoire. Binome de travail requis. Registre de suivi medical a tenir a jour."
+    legal: "Decree No. 2025-482: mandatory heat risk assessment in the DUERP. Buddy system required. Medical monitoring register must be kept up to date."
   },
   5: {
-    seuil: "40 \u2264 HX < 43", niveau: "Inconfort intense", color: "#ef4444",
-    conseil: "Arret des efforts non essentiels. 30 min repos/heure minimum.",
+    seuil: "40 ≤ HX < 43", niveau: "Intense Discomfort", color: "#ef4444",
+    conseil: "Stop all non-essential physical effort. Minimum 30 min rest/hour.",
     protocole: [
-      "Cycle obligatoire : 30 min travail / 30 min repos (ACGIH TLV 2023).",
-      "250 mL d'eau fraiche toutes les 15 min + electrolytes (plafond : 1,5 L/h).",
-      "Rafraichissement actif : brumisateurs, linges humides sur le cou et les poignets.",
-      "Cessation immediate au moindre symptome : vertiges, confusion, nausees (OHCOW Level 5).",
+      "Mandatory cycle: 30 min work / 30 min rest (ACGIH TLV 2023).",
+      "250 mL of cool water every 15 min + electrolytes (limit: 1.5 L/h).",
+      "Active cooling: misting devices, damp cloths on neck and wrists.",
+      "Immediate stop at the first symptom: dizziness, confusion, nausea (OHCOW Level 5).",
     ],
-    legal: "OHCOW Level 5 : retrait immediat des travailleurs vulnerables. Surveillance medicale renforcee obligatoire. Signalement RH requis."
+    legal: "OHCOW Level 5: immediate withdrawal of vulnerable workers. Reinforced medical monitoring required. HR reporting required."
   },
   6: {
-    seuil: "43 \u2264 HX < 45", niveau: "Urgence Vitale", color: "#dc2626",
-    conseil: "Tous travaux exterieurs proscrits. Rester dans un espace frais.",
+    seuil: "43 ≤ HX < 45", niveau: "Life-Threatening Emergency", color: "#dc2626",
+    conseil: "All outdoor work prohibited. Stay in a cool area.",
     protocole: [
-      "AUCUNE activite physique exterieure autorisee (OHCOW Level 6).",
-      "Cycle max : 15 min activite legere / 45 min repos en espace frais (< 26 \u00b0C — ACGIH TLV).",
-      "Verification etat de sante (conscience, sudation) chaque heure.",
-      "SAMU (15) accessible immediatement — numero affiche sur chaque poste.",
+      "NO outdoor physical activity allowed (OHCOW Level 6).",
+      "Maximum cycle: 15 min light activity / 45 min rest in a cool area (< 26 °C — ACGIH TLV).",
+      "Hourly health check: consciousness and sweating.",
+      "Emergency services (15) must be immediately accessible — number displayed at each workstation.",
     ],
-    legal: "Decret n\u00b0 2025-482 : arret de travail possible par DREETS. Obligation de mise a disposition d'un local climatise. Risque vital engage."
+    legal: "Decree No. 2025-482: work stoppage possible by DREETS. Mandatory access to an air-conditioned room. Life-threatening risk."
   },
   7: {
-    seuil: "HX \u2265 45", niveau: "Danger Extreme", color: "#991b1b",
-    conseil: "SUSPENSION IMMEDIATE de toute activite. Risque vital.",
+    seuil: "HX ≥ 45", niveau: "Extreme Danger", color: "#991b1b",
+    conseil: "IMMEDIATE SUSPENSION of all activity. Life-threatening risk.",
     protocole: [
-      "SUSPENSION TOTALE de toute activite physique (OHCOW Level 7).",
-      "Environnement climatise obligatoire (< 24 \u00b0C) et surveillance continue.",
-      "SAMU (15) au moindre signe : confusion, absence de sueur, T > 39,5 \u00b0C (HAS 2023).",
-      "Coup de chaleur : refroidir immediatement (linges froids cou/aines/aisselles) — mortalite 10-50 % sans PEC (Bouchama & Knochel, NEJM 2002).",
+      "TOTAL SUSPENSION of all physical activity (OHCOW Level 7).",
+      "Air-conditioned environment required (< 24 °C) with continuous monitoring.",
+      "Call emergency services (15) at the first sign: confusion, absence of sweating, T > 39.5 °C (HAS 2023).",
+      "Heatstroke: cool immediately with cold cloths on neck/groin/armpits — mortality 10–50% without care (Bouchama & Knochel, NEJM 2002).",
     ],
-    legal: "Decret n\u00b0 2025-482 : arret immediat obligatoire. Responsabilite penale de l'employeur engagee. Protocole coup de chaleur HAS 2023 a afficher sur site."
+    legal: "Decree No. 2025-482: immediate shutdown required. Employer criminal liability engaged. HAS 2023 heatstroke protocol must be displayed on site."
   }
 };
 
-const MONTHS_FR = ["Janvier","Fevrier","Mars","Avril","Mai","Juin",
-                   "Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
-const DAYS_FR   = ["L","M","M","J","V","S","D"];
+const MONTHS_FR = ["January","February","March","April","May","June",
+                   "July","August","September","October","November","December"];
+const DAYS_FR   = ["M","T","W","T","F","S","S"];
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let DATA          = null;
@@ -1170,6 +992,8 @@ let selectedDate  = null;
 let timelineChart = null;
 let donutChart    = null;
 let activeRow     = null;
+let histChart     = null;
+let histMode      = "cls";
 let leafletMap    = null;
 let mapMarkerLayers = [];
 let mapInitialized  = false;
@@ -1198,9 +1022,9 @@ function getStationsForDate(date) {
     initUI();
   } else {
     document.getElementById("day-content").innerHTML =
-      "<div class='no-data-msg'>Donnees introuvables.<br/>" +
-      "Executez d'abord : <code>python prepare_dashboard_data.py</code><br/>" +
-      "puis ouvrez <strong>dashboard.html</strong> depuis le dossier <code>dashboard/</code></div>";
+      "<div class='no-data-msg'>Data not found.<br/>" +
+      "Run first: <code>python prepare_dashboard_data.py</code><br/>" +
+      "then open <strong>dashboard.html</strong> from the <code>dashboard/</code> folder.</div>";
   }
 })();
 
@@ -1208,7 +1032,7 @@ function initUI() {
   const meteoCount  = Object.keys(DATA.meteo_days).length;
   const neustaCount = Object.keys(DATA.neusta_days).length;
   document.getElementById("src-info").textContent =
-    "Meteo France : " + meteoCount + " jours  |  Neusta : " + neustaCount + " jours";
+    "Meteo France: " + meteoCount + " days  |  Neusta: " + neustaCount + " days";
 
   buildLegend();
 
@@ -1227,13 +1051,14 @@ function initUI() {
   calYear = parseInt(startDate.slice(0, 4));
   buildCalendar();
   showDay(startDate);
+  buildTimeline();
 }
 
 // ── Legend ────────────────────────────────────────────────────────────────────
 function buildLegend() {
   document.getElementById("legend-rows").innerHTML =
     Object.entries(ALARME).map(([cls, a]) =>
-      `<div class="legend-row" onclick="jumpToClass(${cls})" title="Voir la journee la plus chaude de classe ${cls}">
+      `<div class="legend-row" onclick="jumpToClass(${cls})" title="View the hottest day of class ${cls}">
          <div class="legend-dot" style="background:${a.color}"></div>
          <span class="legend-text">${a.niveau}</span>
          <span class="legend-seuil">${a.seuil}</span>
@@ -1283,7 +1108,7 @@ function buildCalendar() {
         cell.style.background = ALARME[cls].color;
         cell.onclick = () => showDay(date);
         cell.addEventListener("mousemove", ev =>
-          showTooltip(ev, date + " &mdash; Classe " + cls + " : " + ALARME[cls].niveau));
+          showTooltip(ev, date + " &mdash; Class " + cls + ": " + ALARME[cls].niveau));
         cell.addEventListener("mouseleave", hideTooltip);
       } else {
         cell.classList.add("no-data");
@@ -1306,18 +1131,18 @@ function setSource(src) {
   document.getElementById("btn-meteo").classList.toggle("active", src === "meteo");
   document.getElementById("btn-neusta").classList.toggle("active", src === "neusta");
 
-  // Chercher un jour disponible dans la nouvelle source
+  // Look for an available day in the new source
   const days   = src === "meteo" ? DATA.meteo_days : DATA.neusta_days;
   const dates  = Object.keys(days).sort();
 
   if (dates.length === 0) {
     buildCalendar();
     document.getElementById("day-content").innerHTML =
-      "<div class='no-data-msg'>Aucune donnee disponible pour cette source.</div>";
+      "<div class='no-data-msg'>No data available for this source.</div>";
     return;
   }
 
-  // Si la date courante existe dans la nouvelle source, la garder ; sinon prendre la plus chaude
+  // If the current date exists in the new source, keep it; otherwise select the hottest day
   if (days[selectedDate]) {
     buildCalendar();
     showDay(selectedDate);
@@ -1329,6 +1154,7 @@ function setSource(src) {
     buildCalendar();
     showDay(newDate);
   }
+  buildTimeline();
 }
 
 // ── Day navigation ────────────────────────────────────────────────────────────
@@ -1336,7 +1162,7 @@ function navigateDay(delta) {
   if (!selectedDate) return;
   const days  = source === "meteo" ? DATA.meteo_days : DATA.neusta_days;
   const dates = Object.keys(days).sort();
-  // Si la date courante n'existe pas dans cette source, aller au début ou à la fin
+  // If the current date does not exist in this source, go to the beginning or the end
   let idx = dates.indexOf(selectedDate);
   if (idx === -1) {
     idx = delta > 0 ? -1 : dates.length;
@@ -1352,11 +1178,11 @@ function jumpToClass(cls) {
   if (match.length > 0) {
     showDay(match[0].date);
   } else {
-    const srcName = source === "meteo" ? "Meteo France" : "Neusta (capteur interieur)";
+    const srcName = source === "meteo" ? "Meteo France" : "Neusta (indoor sensor)";
     document.getElementById("day-content").innerHTML =
-      `<div class='no-data-msg'>Aucun jour de classe <strong>${cls}</strong> (${ALARME[cls].niveau})<br/>
-       dans la source <strong>${srcName}</strong>.<br/>
-       <small style='color:var(--muted)'>Les capteurs Neusta sont installes en interieur (T 16-24 deg C) : seules les classes 0 et 1 sont observables.</small></div>`;
+      `<div class='no-data-msg'>No day found for class <strong>${cls}</strong> (${ALARME[cls].niveau})<br/>
+       in source <strong>${srcName}</strong>.<br/>
+       <small style='color:var(--muted)'>Neusta sensors are installed indoors (T 16–24 °C): only classes 0 and 1 are observable.</small></div>`;
   }
 }
 
@@ -1378,8 +1204,8 @@ function showDay(date) {
 
   if (!day) {
     document.getElementById("day-content").innerHTML =
-      `<div class="no-data-msg">Aucune donnee disponible pour le <strong>${fmtDate(date)}</strong><br/>
-       <small>(source : ${source === "meteo" ? "Meteo France" : "Neusta"})</small></div>`;
+      `<div class="no-data-msg">No data available for <strong>${fmtDate(date)}</strong><br/>
+       <small>(source: ${source === "meteo" ? "Meteo France" : "Neusta"})</small></div>`;
     return;
   }
   renderDay(date, day);
@@ -1405,7 +1231,7 @@ function renderDay(date, day) {
   buildTimelineChart(day);
   buildDonutChart(s);
 
-  // Recommendations for max class (default)
+  // Recommendations for max class by default
   renderRec(maxCls);
 
   // Hourly table interactions
@@ -1427,26 +1253,26 @@ function buildDayHTML(day, maxCls, alarm, s) {
   const statsHTML = `
   <div class="stats-row">
     <div class="stat-card">
-      <div class="stat-label">Classe maximale</div>
+      <div class="stat-label">Maximum class</div>
       <div class="stat-value" style="color:${alarm.color}">${maxCls}</div>
       <div class="stat-sub">${alarm.niveau}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Humidex max</div>
+      <div class="stat-label">Max Humidex</div>
       <div class="stat-value">${s.max_hx}<span class="stat-unit"> HX</span></div>
-      <div class="stat-sub">seuil classe ${maxCls} : ${alarm.seuil}</div>
+      <div class="stat-sub">class ${maxCls} threshold: ${alarm.seuil}</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Temperature</div>
-      <div class="stat-value">${s.max_T}<span class="stat-unit"> \u00b0C</span></div>
-      <div class="stat-sub">min : ${s.min_T} \u00b0C</div>
+      <div class="stat-value">${s.max_T}<span class="stat-unit"> °C</span></div>
+      <div class="stat-sub">min: ${s.min_T} °C</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Humidite moy.</div>
+      <div class="stat-label">Avg. humidity</div>
       <div class="stat-value">${s.avg_HR}<span class="stat-unit"> %</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Releves</div>
+      <div class="stat-label">Readings</div>
       <div class="stat-value">${day.obs.length}</div>
       <div class="stat-sub">observations</div>
     </div>
@@ -1458,9 +1284,9 @@ function buildDayHTML(day, maxCls, alarm, s) {
     <div class="badge-cls" style="color:${alarm.color}">${maxCls}</div>
     <div>
       <div class="badge-niveau">${alarm.niveau}</div>
-      <div class="badge-seuil">${alarm.seuil} &mdash; Pic : HX ${s.max_hx} &mdash; T max : ${s.max_T} \u00b0C</div>
+      <div class="badge-seuil">${alarm.seuil} &mdash; Peak: HX ${s.max_hx} &mdash; Max T: ${s.max_T} °C</div>
     </div>
-    <div class="badge-src">Classe de reference du jour<br/><span style="font-size:10px">(valeur maximale enregistree)</span></div>
+    <div class="badge-src">Reference class of the day<br/><span style="font-size:10px">(maximum recorded value)</span></div>
   </div>`;
 
   // Hourly table
@@ -1478,11 +1304,11 @@ function buildDayHTML(day, maxCls, alarm, s) {
   return statsHTML + badgeHTML + `
   <div class="charts-row">
     <div class="chart-card">
-      <div class="chart-title">Evolution horaire &mdash; Humidex &amp; Temperature</div>
+      <div class="chart-title">Hourly Evolution &mdash; Humidex &amp; Temperature</div>
       <div style="position:relative;height:210px"><canvas id="timeline-chart"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Repartition des classes</div>
+      <div class="chart-title">Class Distribution</div>
       <div style="height:210px;display:flex;align-items:center;justify-content:center">
         <canvas id="donut-chart" style="max-width:190px;max-height:190px"></canvas>
       </div>
@@ -1490,18 +1316,18 @@ function buildDayHTML(day, maxCls, alarm, s) {
   </div>
 
   <div style="margin-bottom:14px">
-    <div class="panel-title">Recommandations &mdash; <span id="rec-cls-label">Classe ${maxCls} (pic journalier)</span></div>
+    <div class="panel-title">Recommendations &mdash; <span id="rec-cls-label">Class ${maxCls} (daily peak)</span></div>
     <div id="rec-container"></div>
   </div>
 
   <div>
-    <div class="panel-title">Detail horaire &mdash; cliquer sur une ligne pour voir ses recommandations</div>
+    <div class="panel-title">Hourly Details &mdash; click a row to view its recommendations</div>
     <div class="chart-card" style="padding:0;overflow:hidden">
       <table class="timeline-table">
         <thead>
           <tr>
-            <th>Heure</th><th>T (\u00b0C)</th><th>HR (%)</th>
-            <th>Humidex</th><th>Classe</th><th>Niveau</th>
+            <th>Time</th><th>T (°C)</th><th>RH (%)</th>
+            <th>Humidex</th><th>Class</th><th>Level</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -1534,7 +1360,7 @@ function buildTimelineChart(day) {
         },
         {
           type: "line",
-          label: "Temperature (degC)",
+          label: "Temperature (°C)",
           data: tVals,
           borderColor: "#58a6ff",
           backgroundColor: "transparent",
@@ -1559,8 +1385,8 @@ function buildTimelineChart(day) {
               if (day.obs[i]) {
                 const o = day.obs[i];
                 return [
-                  "Classe " + o.cls + " : " + ALARME[o.cls].niveau,
-                  "HR : " + o.HR + " %"
+                  "Class " + o.cls + ": " + ALARME[o.cls].niveau,
+                  "RH: " + o.HR + " %"
                 ];
               }
               return [];
@@ -1579,7 +1405,7 @@ function buildTimelineChart(day) {
           position: "right",
           grid: { drawOnChartArea: false },
           ticks: { color: "#58a6ff", font: { size: 10 } },
-          title: { display: true, text: "Temperature (degC)", color: "#58a6ff", font: { size: 10 } }
+          title: { display: true, text: "Temperature (°C)", color: "#58a6ff", font: { size: 10 } }
         },
         x: {
           grid: { color: "#30363d" },
@@ -1622,7 +1448,7 @@ function buildDonutChart(s) {
           callbacks: {
             label: (i) => {
               const c = parseInt(i.label.slice(4));
-              return " " + ALARME[c].niveau + " : " + i.raw + " obs";
+              return " " + ALARME[c].niveau + ": " + i.raw + " obs";
             }
           }
         }
@@ -1631,12 +1457,134 @@ function buildDonutChart(s) {
   });
 }
 
+// ── Timeline chart ────────────────────────────────────────────────────────────
+window.setTimelineMode = setTimelineMode;
+
+function setTimelineMode(mode) {
+  histMode = mode;
+  ["cls", "hx", "T"].forEach(m => {
+    const btn = document.getElementById("tl-" + m);
+    if (btn) btn.classList.toggle("active", m === mode);
+  });
+  buildTimeline();
+}
+
+function buildTimeline() {
+  const cal = source === "meteo" ? DATA.calendar_meteo : DATA.calendar_neusta;
+  if (!cal || cal.length === 0) return;
+
+  const sorted = [...cal].sort((a, b) => a.date.localeCompare(b.date));
+  const labels = sorted.map(d => d.date);
+
+  let values, label, unit;
+  if (histMode === "cls") {
+    values = sorted.map(d => d.max_cls);
+    label  = "Maximum thermal class";
+    unit   = "";
+  } else if (histMode === "hx") {
+    values = sorted.map(d => d.max_hx);
+    label  = "Maximum Humidex";
+    unit   = " HX";
+  } else {
+    values = sorted.map(d => {
+      const day = (source === "meteo" ? DATA.meteo_days : DATA.neusta_days)[d.date];
+      return day ? day.stats.max_T : null;
+    });
+    label  = "Maximum temperature (°C)";
+    unit   = " °C";
+  }
+
+  const bgColors = sorted.map(d => {
+    const cls = d.max_cls;
+    return ALARME[cls] ? ALARME[cls].color + "cc" : "#8b949e88";
+  });
+
+  const ctx = document.getElementById("timeline-chart");
+  if (!ctx) return;
+
+  if (histChart) { histChart.destroy(); histChart = null; }
+
+  histChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label,
+        data: values,
+        backgroundColor: bgColors,
+        borderWidth: 0,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const d = items[0].label;
+              return new Date(d).toLocaleDateString("en-US", { weekday:"short", day:"numeric", month:"short", year:"numeric" });
+            },
+            label: (item) => {
+              const d = sorted[item.dataIndex];
+              const cls = d.max_cls;
+              const niveau = ALARME[cls] ? ALARME[cls].niveau : "";
+              return [
+                " " + label + ": " + (item.raw !== null ? item.raw + unit : "\u2014"),
+                " Class " + cls + " \u2014 " + niveau,
+                " Max HX: " + d.max_hx + " HX"
+              ];
+            }
+          },
+          backgroundColor: "#0d1117",
+          borderColor: "#30363d",
+          borderWidth: 1,
+          titleColor: "#e6edf3",
+          bodyColor: "#8b949e",
+          padding: 10
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: "#8b949e",
+            font: { size: 9 },
+            maxTicksLimit: 24,
+            maxRotation: 0,
+            callback: (val, idx) => {
+              const date = labels[idx];
+              if (!date) return "";
+              const d = new Date(date);
+              return d.getDate() === 1 ? d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) : "";
+            }
+          },
+          grid: { color: "#21262d" }
+        },
+        y: {
+          grid: { color: "#21262d" },
+          ticks: { color: "#8b949e", font: { size: 10 } },
+          min: histMode === "cls" ? 0 : undefined,
+          max: histMode === "cls" ? 7 : undefined,
+        }
+      },
+      onClick: (_e, elements) => {
+        if (elements.length > 0) {
+          const date = labels[elements[0].index];
+          if (date) { calYear = parseInt(date.slice(0,4)); buildCalendar(); showDay(date); }
+        }
+      }
+    }
+  });
+}
 
 // ── Render Recommendations ────────────────────────────────────────────────────
 function renderRec(cls) {
   const a   = ALARME[cls];
   const lbl = document.getElementById("rec-cls-label");
-  if (lbl) lbl.textContent = "Classe " + cls + " \u2014 " + a.niveau;
+  if (lbl) lbl.textContent = "Class " + cls + " \u2014 " + a.niveau;
 
   const container = document.getElementById("rec-container");
   if (!container) return;
@@ -1645,37 +1593,37 @@ function renderRec(cls) {
 
   const legalBlock = a.legal ? `
     <div class="legal-warning">
-      <strong>Obligations legales (Decret n\u00b0 2025-482 / OHCOW)</strong><br/>
+      <strong>Legal obligations (Decree No. 2025-482 / OHCOW)</strong><br/>
       ${a.legal}
     </div>` : "";
 
   const vulnBlock = (cls >= 5) ? `
     <div class="vuln-card">
       <div class="rec-card-title" style="color:#f87171;border-bottom-color:#dc262644">
-        Populations vulnerables &mdash; protocole de classe ${Math.min(7, cls + 2)} applicable des la classe ${cls}
+        Vulnerable populations &mdash; class ${Math.min(7, cls + 2)} protocol applies from class ${cls}
       </div>
       <div class="vuln-tags">
-        ${["Personnes agees (>65 ans)", "Femmes enceintes", "Nourrissons (<1 an)",
-           "Acclimatation insuffisante", "Obesite (IMC >= 30)", "Cardiopathie / HTA",
-           "Traitement diuretique / anticholinergique", "Pathologie respiratoire chronique",
-           "Effort physique intense non habituel"]
+        ${["Elderly people (>65 years)", "Pregnant women", "Infants (<1 year)",
+           "Insufficient acclimatization", "Obesity (BMI >= 30)", "Cardiovascular disease / hypertension",
+           "Diuretic / anticholinergic treatment", "Chronic respiratory disease",
+           "Unusual intense physical effort"]
           .map(p => `<span class="vuln-tag">${p}</span>`).join("")}
       </div>
       <div style="margin-top:8px;font-size:11px;color:var(--muted)">
-        Ces personnes atteignent le seuil de danger a des niveaux d'Humidex inferieurs de ~5 unites
-        (NIOSH 2016, HAS 2023). Appliquer les mesures de la classe ${Math.min(7, cls + 2)} des maintenant.
+        These people reach the danger threshold at Humidex levels around 5 units lower
+        (NIOSH 2016, HAS 2023). Apply class ${Math.min(7, cls + 2)} measures immediately.
       </div>
     </div>` : "";
 
   container.innerHTML = `
   <div class="rec-grid">
     <div class="rec-card" style="border-left:3px solid ${a.color}">
-      <div class="rec-card-title">Conseil immediat</div>
+      <div class="rec-card-title">Immediate advice</div>
       <div class="rec-conseil" style="color:${a.color}">${a.conseil}</div>
       ${legalBlock}
     </div>
     <div class="rec-card">
-      <div class="rec-card-title">Protocole de securite (${a.protocole.length} actions)</div>
+      <div class="rec-card-title">Safety protocol (${a.protocole.length} actions)</div>
       <ol class="rec-protocole">
         ${a.protocole.map((p, i) =>
           `<li>
@@ -1685,7 +1633,7 @@ function renderRec(cls) {
         ).join("")}
       </ol>
       <div style="margin-top:10px;font-size:10px;color:var(--muted)">
-        Ref. : OHCOW (2022) &bull; ACGIH TLV (2023) &bull; NIOSH DHHS-2016-106 &bull; HAS (2023) &bull; Decret 2025-482
+        Ref.: OHCOW (2022) &bull; ACGIH TLV (2023) &bull; NIOSH DHHS-2016-106 &bull; HAS (2023) &bull; Decree 2025-482
       </div>
     </div>
   </div>
@@ -1696,7 +1644,7 @@ function renderRec(cls) {
 function fmtDate(d) {
   const [y, m, dd] = d.split("-");
   const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(dd));
-  return date.toLocaleDateString("fr-FR", {
+  return date.toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric"
   });
 }
@@ -1805,9 +1753,9 @@ function switchTab(tab) {
 function makeTooltipHTML(st) {
   const a = ALARME[st.cls];
   const rows = [
-    { k: "Temp\u00e9rature max", v: st.maxT !== null ? st.maxT + " \u00b0C" : "\u2014" },
-    { k: "Humidex max",          v: st.hx   !== null ? st.hx   + " HX"   : "\u2014" },
-    { k: "Seuil classe",         v: a.seuil },
+    { k: "Max temperature", v: st.maxT !== null ? st.maxT + " °C" : "\u2014" },
+    { k: "Max Humidex",     v: st.hx   !== null ? st.hx   + " HX"   : "\u2014" },
+    { k: "Class threshold", v: a.seuil },
   ];
 
   return `<div class="bs-tip-inner">
@@ -1861,7 +1809,7 @@ function updateMapDateInfo() {
   const validEntries = dayData.filter(d => d && d[0] >= 0);
   if (validEntries.length === 0) { el.textContent = ""; return; }
   const maxCls = Math.max(...validEntries.map(d => d[0]));
-  el.textContent = validEntries.length + " stations \u00b7 classe max : " + maxCls + " \u00b7 " + (ALARME[maxCls]?.niveau || "");
+  el.textContent = validEntries.length + " stations · max class: " + maxCls + " · " + (ALARME[maxCls]?.niveau || "");
   el.style.color = ALARME[maxCls]?.color || "var(--muted)";
 }
 
@@ -1894,13 +1842,11 @@ function refreshMapMarkers() {
     const marker = L.circleMarker([st.lat, st.lon], {
       radius,
       color: lightenColor(alarm.color, 1.25),
-      stroke: true, 
+      stroke: true,
       weight: 1.5,
       fillColor: alarm.color,
       fillOpacity: 0.9,
     });
-
-   
 
     marker.bindTooltip(`
       <div class="bs-tip-inner">
@@ -1913,15 +1859,15 @@ function refreshMapMarkers() {
         </div>
 
         <div class="bs-tip-row">
-          <span class="bs-tip-key">Humidex max</span>
+          <span class="bs-tip-key">Max Humidex</span>
           <span class="bs-tip-val">${st.hx ?? "—"} HX</span>
         </div>
         <div class="bs-tip-row">
-          <span class="bs-tip-key">Température max</span>
+          <span class="bs-tip-key">Max temperature</span>
           <span class="bs-tip-val">${st.maxT ?? "—"} °C</span>
         </div>
         <div class="bs-tip-row">
-          <span class="bs-tip-key">Seuil</span>
+          <span class="bs-tip-key">Threshold</span>
           <span class="bs-tip-val">${alarm.seuil}</span>
         </div>
 
@@ -1938,7 +1884,6 @@ function refreshMapMarkers() {
 
     marker.on("click", () => marker.openTooltip());
 
-  
     marker.on("mouseover", function () {
       this.setStyle({
         fillOpacity: 1,
@@ -1953,7 +1898,6 @@ function refreshMapMarkers() {
       });
     });
 
-    // marker.addTo(leafletMap);
     marker.addTo(stationsLayer);
     mapMarkerLayers.push(marker);
     bounds.extend([st.lat, st.lon]);
@@ -1984,7 +1928,7 @@ function initCrossEngine() {
       `<option value="${idx}">${st.name}</option>`
     ).join("");
   });
-  // Default: Toulouse as dep, Paris as arr
+  // Default: Toulouse as departure, Paris as arrival
   const toulouseIdx = stations.findIndex(s => s.name.includes("TOULOUSE"));
   const parisIdx    = stations.findIndex(s => s.name.includes("PARIS") || s.name.includes("CDG") || s.name.includes("LE BOURGET"));
   const depSel = document.getElementById("dep-station");
@@ -2005,44 +1949,44 @@ function initCrossEngine() {
 function getRiskInfo(dep, arr) {
   const delta = arr - dep;
   if (delta === 0) {
-    return { level: "neutre", label: "Zone stable", color: ALARME[arr].color,
+    return { level: "neutral", label: "Stable zone", color: ALARME[arr].color,
              icon: "=", bg: ALARME[arr].color + "22", border: ALARME[arr].color + "55" };
   }
   if (delta < 0) {
     const ab = Math.abs(delta);
-    if (ab >= 3) return { level: "choc-froid", label: "Choc thermique froid", color: "#60a5fa",
+    if (ab >= 3) return { level: "cold-shock", label: "Cold thermal shock", color: "#60a5fa",
                           icon: "\u2744", bg: "#60a5fa22", border: "#60a5fa55" };
-    return { level: "refroid", label: "Refroidissement", color: "#93c5fd",
+    return { level: "cooling", label: "Cooling transition", color: "#93c5fd",
              icon: "\u2193", bg: "#93c5fd22", border: "#93c5fd55" };
   }
   // delta > 0
   const maxCls = arr;
   if (delta >= 4 || (maxCls >= 6 && dep <= 1))
-    return { level: "critique", label: "Transition critique", color: "#ef4444",
+    return { level: "critical", label: "Critical transition", color: "#ef4444",
              icon: "\u26a0", bg: "#ef444422", border: "#ef444455" };
   if (delta >= 3 || maxCls >= 5)
-    return { level: "eleve", label: "Risque eleve", color: "#f97316",
+    return { level: "high", label: "High risk", color: "#f97316",
              icon: "\u25b2", bg: "#f9731622", border: "#f9731655" };
   if (delta >= 2 || maxCls >= 3)
-    return { level: "modere", label: "Risque modere", color: "#facc15",
+    return { level: "moderate", label: "Moderate risk", color: "#facc15",
              icon: "\u2191", bg: "#facc1522", border: "#facc1555" };
-  return { level: "faible", label: "Transition douce", color: "#a3e635",
+  return { level: "low", label: "Smooth transition", color: "#a3e635",
            icon: "\u2197", bg: "#a3e63522", border: "#a3e63555" };
 }
 
 // Acclimatization time by delta
 function getAccliTime(delta) {
   if (delta <= 0) return null;
-  if (delta === 1) return { days: "3-5 jours", desc: "Acclimatation rapide" };
-  if (delta === 2) return { days: "7-10 jours", desc: "Acclimatation moderee" };
-  if (delta === 3) return { days: "10-14 jours", desc: "Acclimatation progressive requise" };
-  return { days: "14-21 jours", desc: "Acclimatation longue \u2014 exposition graduelle obligatoire" };
+  if (delta === 1) return { days: "3–5 days", desc: "Fast acclimatization" };
+  if (delta === 2) return { days: "7–10 days", desc: "Moderate acclimatization" };
+  if (delta === 3) return { days: "10–14 days", desc: "Progressive acclimatization required" };
+  return { days: "14–21 days", desc: "Long acclimatization — gradual exposure required" };
 }
 
 function buildCrossMatrix(depIdx, arrIdx, depCls, arrCls) {
   const wrap = document.getElementById("cross-matrix");
   let html = '<div class="cross-matrix-grid">';
-  // Header row: col labels
+  // Header row: column labels
   html += '<div class="cm-label"></div>';
   for (let a = 0; a < 8; a++) {
     html += `<div class="cm-label" style="color:${ALARME[a].color}">${a}</div>`;
@@ -2056,7 +2000,7 @@ function buildCrossMatrix(depIdx, arrIdx, depCls, arrCls) {
       html += `<div class="cm-cell${sel}"
                     style="background:${ri.color}${a < d ? "44" : "cc"}"
                     onclick="setCrossFromMatrix(${d},${a})"
-                    title="Depart ${d} \u2192 Arrivee ${a}: ${ri.label}">${ri.icon}</div>`;
+                    title="Departure ${d} \u2192 Arrival ${a}: ${ri.label}">${ri.icon}</div>`;
     }
   }
   html += '</div>';
@@ -2064,7 +2008,7 @@ function buildCrossMatrix(depIdx, arrIdx, depCls, arrCls) {
 }
 
 function setCrossFromMatrix(dep, arr) {
-  // When clicking matrix cells directly, we can't change station idx,
+  // When clicking matrix cells directly, we cannot change station idx,
   // but we can re-render the output with the chosen class pair
   const depSel = document.getElementById("dep-station");
   const arrSel = document.getElementById("arr-station");
@@ -2108,13 +2052,13 @@ function renderCrossOutput(dep, arr) {
   const transHTML = `
   <div class="transition-arrow">
     <div class="t-zone" style="background:${aDep.color}18;border:1px solid ${aDep.color}44">
-      <div class="t-zone-label">D&eacute;part</div>
+      <div class="t-zone-label">Departure</div>
       <div class="t-zone-cls" style="color:${aDep.color}">${dep}</div>
       <div class="t-zone-name" style="color:${aDep.color}">${aDep.niveau}</div>
     </div>
     <div class="t-mid">${delta > 0 ? "&#8594;" : delta < 0 ? "&#8592;" : "&#8596;"}</div>
     <div class="t-zone" style="background:${aArr.color}18;border:1px solid ${aArr.color}44">
-      <div class="t-zone-label">Arriv&eacute;e</div>
+      <div class="t-zone-label">Arrival</div>
       <div class="t-zone-cls" style="color:${aArr.color}">${arr}</div>
       <div class="t-zone-name" style="color:${aArr.color}">${aArr.niveau}</div>
     </div>
@@ -2127,7 +2071,7 @@ const riskHTML = `
     <div class="risk-content">
       <div class="risk-level" style="color:${ri.color}">${ri.label}</div>
       <div class="risk-sub">
-        Δ = ${delta > 0 ? "+" : ""}${delta} classes — Niveau d'arrivée : ${aArr.niveau}
+        Δ = ${delta > 0 ? "+" : ""}${delta} classes — Arrival level: ${aArr.niveau}
       </div>
     </div>
     <div class="risk-delta" style="color:${ri.color}">
@@ -2141,7 +2085,7 @@ const riskHTML = `
     <div class="accli-icon">&#9200;</div>
     <div class="accli-text">
       <strong>${accli.desc}</strong><br/>
-      <span style="font-size:11px;color:var(--muted)">NIOSH (2016) &mdash; exposition graduelle recommandee</span>
+      <span style="font-size:11px;color:var(--muted)">NIOSH (2016) &mdash; gradual exposure recommended</span>
     </div>
     <div class="accli-time">${accli.days}</div>
   </div>` : "";
@@ -2151,7 +2095,7 @@ const riskHTML = `
 
   let stepsHTML = "";
   const phases = ["avant", "transit", "arrivee", "suivi"];
-  const phaseLabels = { avant:"Avant", transit:"Transit", arrivee:"Arrivee", suivi:"Suivi" };
+  const phaseLabels = { avant:"Before", transit:"Transit", arrivee:"Arrival", suivi:"Monitoring" };
   phases.forEach(ph => {
     const phSteps = steps.filter(s => s.phase === ph);
     if (phSteps.length === 0) return;
@@ -2169,7 +2113,7 @@ const riskHTML = `
   // Legal note if arriving in dangerous zone
   const legalHTML = (arr >= 4 && aArr.legal) ? `
   <div class="legal-warning">
-    <strong>Obligations legales (Zone d&apos;arriv&eacute;e Classe ${arr})</strong><br/>
+    <strong>Legal obligations (Arrival Zone Class ${arr})</strong><br/>
     ${aArr.legal}
   </div>` : "";
 
@@ -2184,39 +2128,39 @@ function getCrossSteps(dep, arr, delta, riskLevel) {
 
   // ── PRE-DEPARTURE ──
   if (delta > 0) {
-    steps.push({ phase:"avant", text: `V&eacute;rifier la m&eacute;t&eacute;o de la zone d&apos;arriv&eacute;e (Humidex cible : ${aArr.seuil}).` });
+    steps.push({ phase:"avant", text: `Check the weather conditions in the arrival zone (target Humidex: ${aArr.seuil}).` });
     if (dep <= 2 && arr >= 4)
-      steps.push({ phase:"avant", text: "Corps non acclimate : programmer une exposition graduelle sur plusieurs jours avant l&apos;arriv&eacute;e en zone chaude (NIOSH 2016)." });
+      steps.push({ phase:"avant", text: "Non-acclimatized body: plan gradual exposure over several days before entering the hot zone (NIOSH 2016)." });
     if (arr >= 5)
-      steps.push({ phase:"avant", text: "Bilan m&eacute;dical preventif recommande pour les departs depuis une zone fraiche (< Classe 2) vers une zone de danger (>= Classe 5)." });
-    steps.push({ phase:"avant", text: `Hydrater 500 mL suppl&eacute;mentaires dans les 2h avant le d&eacute;part (pr&eacute;-charge hydrique &mdash; OHCOW 2022).` });
+      steps.push({ phase:"avant", text: "Preventive medical check recommended when moving from a cool zone (< Class 2) to a danger zone (>= Class 5)." });
+    steps.push({ phase:"avant", text: `Drink an additional 500 mL within 2 hours before departure (fluid preloading — OHCOW 2022).` });
     if (delta >= 2)
-      steps.push({ phase:"avant", text: "Pr&eacute;parer kit chaleur : brumisateur, linge humide, eau sal&eacute;e (electrolytes), thermom&egrave;tre auriculaire." });
+      steps.push({ phase:"avant", text: "Prepare a heat kit: misting spray, damp cloth, salted water/electrolytes, ear thermometer." });
   } else if (delta < 0) {
-    steps.push({ phase:"avant", text: `Zone d&apos;arriv&eacute;e plus fraiche (${aArr.niveau}). Pr&eacute;voir v&ecirc;tements adapt&eacute;s si delta &ge; 3 classes.` });
+    steps.push({ phase:"avant", text: `Cooler arrival zone (${aArr.niveau}). Prepare appropriate clothing if delta is ≥ 3 classes.` });
     if (Math.abs(delta) >= 3)
-      steps.push({ phase:"avant", text: "Risque de choc thermique froid : &eacute;viter l&apos;air conditionne agressif directement après une forte chaleur (HAS 2023)." });
+      steps.push({ phase:"avant", text: "Risk of cold thermal shock: avoid aggressive air conditioning immediately after strong heat exposure (HAS 2023)." });
   } else {
-    steps.push({ phase:"avant", text: `M&ecirc;me niveau thermique (Classe ${arr}). Appliquer directement le protocole standard de la classe.` });
+    steps.push({ phase:"avant", text: `Same thermal level (Class ${arr}). Apply the standard class protocol directly.` });
   }
 
   // ── TRANSIT ──
   if (delta > 0) {
     if (arr >= 3) {
-      steps.push({ phase:"transit", text: "250 mL d&apos;eau fraiche toutes les 20 min pendant le trajet m&ecirc;me en v&eacute;hicule climatis&eacute;." });
-      steps.push({ phase:"transit", text: "Ne pas s&apos;exposer directement au soleil &agrave; l&apos;arriv&eacute;e : entrer d&apos;abord dans un espace frais 15-20 min (sas d&apos;acclimatation)." });
+      steps.push({ phase:"transit", text: "Drink 250 mL of cool water every 20 min during transit, even in an air-conditioned vehicle." });
+      steps.push({ phase:"transit", text: "Avoid direct sun exposure on arrival: first enter a cool area for 15–20 min (acclimatization buffer)." });
     }
     if (delta >= 3)
-      steps.push({ phase:"transit", text: `Produit en croix Classe ${dep} \u00d7 Classe ${arr} : appliquer le protocole de classe ${Math.min(7, Math.floor((dep + arr) / 2) + 1)} d&egrave;s le transit (niveau interm&eacute;diaire).` });
+      steps.push({ phase:"transit", text: `Cross-product Class ${dep} × Class ${arr}: apply class ${Math.min(7, Math.floor((dep + arr) / 2) + 1)} protocol from transit onward (intermediate level).` });
   } else if (delta < 0 && Math.abs(delta) >= 2) {
-    steps.push({ phase:"transit", text: "Refroidissement progressif : r&eacute;duire la climatisation graduellement plut&ocirc;t que passage brutal chaud&rarr;froid." });
+    steps.push({ phase:"transit", text: "Progressive cooling: reduce air conditioning gradually instead of a brutal hot-to-cold transition." });
   }
 
   // ── POST-ARRIVAL ──
-  steps.push({ phase:"arrivee", text: `Appliquer imm&eacute;diatement le protocole Classe ${arr} : ${aArr.conseil}` });
+  steps.push({ phase:"arrivee", text: `Immediately apply Class ${arr} protocol: ${aArr.conseil}` });
   if (delta >= 2) {
-    steps.push({ phase:"arrivee", text: `Premi&egrave;re heure : r&eacute;duire l&apos;intensit&eacute; des activit&eacute;s de 50 % (corps non acclimate &mdash; NIOSH, exposition progressive).` });
-    steps.push({ phase:"arrivee", text: `Surveiller : vertiges, naus&eacute;es, peau rouge et s&egrave;che, confusion = signes de coup de chaleur &rarr; appeler le 15 imm&eacute;diatement.` });
+    steps.push({ phase:"arrivee", text: `First hour: reduce activity intensity by 50% (non-acclimatized body — NIOSH, progressive exposure).` });
+    steps.push({ phase:"arrivee", text: `Monitor: dizziness, nausea, red and dry skin, confusion = signs of heatstroke → call 15 immediately.` });
   }
   if (arr >= 4) {
     aArr.protocole.forEach(p => {
@@ -2227,113 +2171,16 @@ function getCrossSteps(dep, arr, delta, riskLevel) {
   // ── FOLLOW-UP ──
   if (delta >= 2) {
     const accli = getAccliTime(delta);
-    steps.push({ phase:"suivi", text: `Acclimatation compl&egrave;te pr&eacute;vue sous ${accli.days}. Augmenter progressivement les activit&eacute;s physiques chaque jour.` });
+    steps.push({ phase:"suivi", text: `Full acclimatization expected within ${accli.days}. Gradually increase physical activities each day.` });
   }
   if (dep >= 4 && arr <= 1) {
-    steps.push({ phase:"suivi", text: "Passage de zone chaude (&ge; Classe 4) vers zone fraiche : surveiller les crampes musculaires (perte en sel) les 24h suivantes." });
+    steps.push({ phase:"suivi", text: "Moving from a hot zone (≥ Class 4) to a cool zone: monitor muscle cramps over the following 24 hours (salt loss)." });
   }
   if (arr >= 5)
-    steps.push({ phase:"suivi", text: `Produit en croix : bilan de fin de journ&eacute;e obligatoire &mdash; peser avant/apr&egrave;s exposition (perte >1 kg = d&eacute;shydratation significative &mdash; ACGIH TLV 2023).` });
+    steps.push({ phase:"suivi", text: `Cross-product rule: mandatory end-of-day check — weigh before/after exposure (loss >1 kg = significant dehydration — ACGIH TLV 2023).` });
 
   return steps;
 }
-
-// ── Diagnostic Local ──────────────────────────────────────────────────────────
-
-function toggleDiagnostic() {
-  const panel = document.getElementById("diag-panel");
-  const isOpen = panel.classList.toggle("open");
-  if (isOpen) updateDiagnostic();
-}
-
-function calcHumidex(T, HR) {
-  const e = 6.112 * Math.pow(10, (7.5 * T) / (237.7 + T)) * (HR / 100);
-  return T + (5 / 9) * (e - 10);
-}
-
-function calcClass(hx) {
-  const seuils = [25, 30, 34, 38, 40, 43, 45];
-  for (let i = 0; i < seuils.length; i++) {
-    if (hx < seuils[i]) return i;
-  }
-  return 7;
-}
-
-function updateDiagnostic() {
-  const T  = parseFloat(document.getElementById("diag-t").value);
-  const HR = parseFloat(document.getElementById("diag-hr").value);
-
-  document.getElementById("diag-t-val").textContent  = T + " °C";
-  document.getElementById("diag-hr-val").textContent = HR + " %";
-
-  const hx  = calcHumidex(T, HR);
-  const cls = calcClass(hx);
-  const a   = ALARME[cls];
-
-  // Humidex
-  document.getElementById("diag-hx-val").textContent = hx.toFixed(1);
-
-  // Badge classe
-  const badge = document.getElementById("diag-badge");
-  badge.style.background   = a.color + "18";
-  badge.style.borderColor  = a.color + "55";
-  document.getElementById("diag-cls-num").textContent   = cls;
-  document.getElementById("diag-cls-num").style.color   = a.color;
-  document.getElementById("diag-cls-name").textContent  = a.niveau;
-  document.getElementById("diag-cls-name").style.color  = a.color;
-  document.getElementById("diag-cls-seuil").textContent = a.seuil;
-
-  // Bouton flottant : couleur du dot + alerte
-  const dot = document.getElementById("diag-dot");
-  dot.style.background  = a.color;
-  dot.style.boxShadow   = "0 0 8px " + a.color;
-  const btn = document.getElementById("diag-toggle-btn");
-  btn.classList.toggle("alert", cls >= 3);
-
-  // Signal d'alerte
-  const signal     = document.getElementById("diag-signal");
-  const signalText = document.getElementById("diag-signal-text");
-  if (cls >= 3) {
-    signal.classList.add("show");
-    if (cls >= 6) {
-      signal.style.borderColor = "#991b1b";
-      signal.style.background  = "#1a0000";
-      signal.style.color       = "#f87171";
-      signalText.innerHTML = "<strong>SIGNAL CRITIQUE</strong> — Risque vital. Arrêt immédiat de toute activité physique. Contacter le SAMU (15) au moindre symptôme.";
-    } else if (cls >= 5) {
-      signal.style.borderColor = "#ef4444";
-      signal.style.background  = "#1a0505";
-      signal.style.color       = "#f87171";
-      signalText.innerHTML = "<strong>SIGNAL ÉLEVÉ</strong> — Inconfort intense. Arrêt des efforts non essentiels. Rafraîchissement actif requis.";
-    } else if (cls >= 4) {
-      signal.style.borderColor = "#f97316";
-      signal.style.background  = "#1a0c00";
-      signal.style.color       = "#fb923c";
-      signalText.innerHTML = "<strong>SIGNAL ALERTE</strong> — Stress thermique élevé. Cycle 45 min travail / 15 min repos. Binôme obligatoire.";
-    } else {
-      signal.style.borderColor = "#facc15";
-      signal.style.background  = "#1a1600";
-      signal.style.color       = "#facc15";
-      signalText.innerHTML = "<strong>SIGNAL VIGILANCE</strong> — Inconfort évident. Réduire les efforts intenses. Hydratation renforcée.";
-    }
-  } else {
-    signal.classList.remove("show");
-  }
-
-  // Recommandations
-  const rec = document.getElementById("diag-rec");
-  let html = "<div class='diag-rec-conseil'>" + a.conseil + "</div>";
-  html += "<ul>";
-  a.protocole.forEach(p => { html += "<li>" + p + "</li>"; });
-  html += "</ul>";
-  if (cls >= 4 && a.legal) {
-    html += "<div style='margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:#f87171'>" + a.legal + "</div>";
-  }
-  rec.innerHTML = html;
-}
-
-window.toggleDiagnostic = toggleDiagnostic;
-window.updateDiagnostic = updateDiagnostic;
 </script>
 </body>
 </html>
