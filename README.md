@@ -35,14 +35,6 @@ The underlying classification model is a **Random Forest** (500 trees, entropy c
   - Acclimatization estimation
   - Automatic legal alerts
 
----
-
-## Project Structure
-
-dashboard/
-├── dashboard.html
-├── dashboard_data.js
-└── prepare_dashboard_data.py
 
 ---
 
